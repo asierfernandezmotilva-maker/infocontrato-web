@@ -1,0 +1,654 @@
+/* =============================================================
+   InfoContrato — styles.css (único archivo de estilos)
+   Dirección: el papel oficial, pero amable. La estructura de la propia ley
+   (apartados a–q, citas, «Recibí») es el recurso visual; nada decorativo.
+   1. Fuente · 2. Tokens · 3. Reset y base · 4. Utilidades · 5. Tipografía
+   6. Componentes · 7. Secciones · 8. Responsive · 9. Movimiento reducido
+   Contrastes comprobados (WCAG AA): texto ≥ 4.5:1, bordes de campos ≥ 3:1.
+   ============================================================= */
+
+/* =============================================================
+   1. Fuente — Atkinson Hyperlegible Next 5.3.0 (Braille Institute), OFL-1.1.
+   Diseñada para máxima legibilidad: el RD 723/2026 exige información
+   accesible y comprensible. Alojada en la propia web (sin Google Fonts):
+   ninguna petición a terceros. Licencia en assets/fonts/OFL.txt.
+   ============================================================= */
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("assets/fonts/atkinson-hyperlegible-next-latin-wght.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* =============================================================
+   2. Tokens
+   ============================================================= */
+:root {
+  color-scheme: light dark;
+
+  --page: #f4f7f8;           /* la mesa */
+  --paper: #ffffff;          /* el papel: tarjetas y campos */
+  --text: #132028;           /* tinta */
+  --muted: #4f616d;          /* 6.0:1 sobre --page */
+  --border: #d3dde3;         /* decorativo: separadores y contornos */
+  --input-border: #6b7c88;   /* 4.3:1 — bordes de campos (WCAG 1.4.11) */
+  --accent: #0b5d73;         /* azul petróleo, 7.4:1 sobre blanco */
+  --accent-strong: #074557;
+  --accent-soft: #e3f0f3;
+  --on-accent: #ffffff;
+  --focus: #0a66c2;
+
+  --ok: #1d6b45;      --ok-bg: #e6f4ec;
+  --warn: #7a4f00;    --warn-bg: #fff4dc;   --warn-border: #e8c26a;
+  --error: #b42318;   --error-bg: #fdeceb;
+
+  --sans: "Atkinson Hyperlegible Next", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+
+  /* Radios por jerarquía: la tarjeta es la pieza mayor; las letras, las menores */
+  --radius-card: 14px;
+  --radius-control: 10px;
+  --radius-chip: 5px;
+
+  --shadow-card: 0 1px 2px rgba(19, 32, 40, .05), 0 14px 32px -14px rgba(19, 32, 40, .22);
+  --gutter: 16px;
+  --measure: 44rem;          /* una sola columna para toda la web: lectura cómoda (< 80 caracteres) */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #0e1920;
+    --paper: #14232c;
+    --text: #e6eef2;
+    --muted: #9db0bc;
+    --border: #2a3d49;
+    --input-border: #6f8796;
+    --accent: #5cc3d9;
+    --accent-strong: #86d5e6;
+    --accent-soft: #15333d;
+    --on-accent: #06222b;
+    --focus: #8ab4f8;
+
+    --ok: #7fd3a3;      --ok-bg: #12301f;
+    --warn: #f3c969;    --warn-bg: #33270b;   --warn-border: #6b5418;
+    --error: #ff9b8f;   --error-bg: #3a1714;
+
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .4), 0 14px 32px -14px rgba(0, 0, 0, .6);
+  }
+}
+
+/* =============================================================
+   3. Reset y base
+   ============================================================= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--sans);
+  font-size: 1.0625rem;      /* 17px: cuerpo cómodo con esta letra de ojo grande */
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--page);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+img, svg { display: block; max-width: 100%; }
+img { height: auto; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { color: var(--accent-strong); text-decoration-thickness: 2px; }
+ul[role="list"], ol[role="list"], .site-nav ul, .footer-links { list-style: none; padding: 0; }
+[hidden] { display: none !important; } /* que ningún display de componente (p. ej. .btn) lo anule */
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+a, button, input, select, textarea, label, summary { touch-action: manipulation; }
+/* Mientras el banner de cookies está abajo, lo que recibe el foco se coloca por encima de él (WCAG 2.4.11) */
+html:has(.consent) { scroll-padding-bottom: 11rem; }
+::selection { background: var(--accent); color: var(--on-accent); }
+
+/* =============================================================
+   4. Utilidades
+   ============================================================= */
+/* Cabecera, contenido y pie comparten la misma columna: todo arranca en la misma línea */
+.container { width: 100%; max-width: calc(var(--measure) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.skip-link {
+  position: fixed; top: -100px; left: 1rem; z-index: 9999;
+  padding: .6rem 1rem; border-radius: var(--radius-control);
+  background: var(--accent); color: var(--on-accent); font-weight: 700;
+}
+.skip-link:focus { top: 1rem; }
+
+/* =============================================================
+   5. Tipografía (escala de tercera mayor sobre 17px)
+   ============================================================= */
+h1, h2, h3 { color: var(--text); text-wrap: balance; }
+h1 {
+  font-size: clamp(1.9rem, 1.35rem + 2.6vw, 2.85rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.022em;
+}
+h2 { font-size: clamp(1.4rem, 1.2rem + 1vw, 1.75rem); font-weight: 750; line-height: 1.15; letter-spacing: -0.012em; }
+h3 { font-size: 1.25rem; font-weight: 700; line-height: 1.2; }
+p { text-wrap: pretty; }
+.lead { font-size: 1.125rem; color: var(--muted); max-width: 38rem; }
+.fine-print { font-size: .875rem; color: var(--muted); max-width: 42rem; }
+
+/* =============================================================
+   6. Componentes
+   ============================================================= */
+
+/* --- Marca --- */
+.brand {
+  display: inline-flex; align-items: center; gap: .5rem; min-height: 44px;
+  color: var(--text); text-decoration: none; border-radius: 6px;
+}
+.brand:hover { color: var(--text); }
+.brand-mark { width: 28px; height: 28px; flex: none; }
+.brand-mark .m-doc { fill: var(--accent); }
+.brand-mark .m-fold { fill: var(--paper); opacity: .4; }
+.brand-mark .m-tick { fill: none; stroke: var(--on-accent); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.brand-name { font-size: 1.1875rem; font-weight: 800; letter-spacing: -0.015em; }
+
+/* --- Botones (mínimo 48px de alto: fácil de pulsar en móvil) --- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  min-height: 48px; padding: 0 1.25rem;
+  border: 2px solid transparent; border-radius: var(--radius-control);
+  font-weight: 700; text-decoration: none; cursor: pointer;
+  transition: background-color .2s var(--ease-out), border-color .2s var(--ease-out), transform .12s var(--ease-out);
+}
+.btn:active { transform: translateY(1px); }
+.btn--primary { background: var(--accent); color: var(--on-accent); }
+.btn--primary:hover { background: var(--accent-strong); color: var(--on-accent); }
+.btn--secondary { background: var(--paper); color: var(--accent); border-color: var(--accent); }
+.btn--secondary:hover { background: var(--accent-soft); }
+.btn--link { min-height: 44px; padding: 0 .25rem; background: none; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.btn[disabled], .btn[aria-disabled="true"] { opacity: .55; cursor: not-allowed; transform: none; }
+
+/* --- Formularios --- */
+fieldset { border: 0; padding: 0; min-width: 0; }
+legend { font-size: 1.25rem; font-weight: 750; margin-bottom: .875rem; padding: 0; }
+.field { display: grid; gap: .375rem; margin-bottom: 1.25rem; }
+.field > label, .field-label { font-weight: 700; }
+.field-help { font-size: .9375rem; color: var(--muted); }
+/* :where() deja la especificidad baja para que el estado de error (abajo) siempre gane */
+.field :where(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea) {
+  width: 100%; min-height: 48px; padding: .625rem .75rem;
+  font-size: max(16px, 1rem); /* nunca por debajo de 16px: evita el zoom automático de iOS */
+  background: var(--paper); color: var(--text);
+  border: 1px solid var(--input-border); border-radius: var(--radius-control);
+}
+.field :where(textarea) { min-height: 6rem; resize: vertical; }
+.field :where(input, select, textarea):focus-visible { border-color: var(--accent); }
+.field [aria-invalid="true"] { border: 2px solid var(--error); }
+.field-error { display: flex; gap: .375rem; color: var(--error); font-size: .9375rem; font-weight: 700; }
+.field-error:empty { display: none; }
+.check { display: flex; align-items: flex-start; gap: .625rem; min-height: 44px; padding-block: .5rem; cursor: pointer; }
+.check input { width: 22px; height: 22px; margin-top: .1rem; flex: none; accent-color: var(--accent); }
+
+/* --- Avisos (icono SVG en línea + texto; el color nunca es la única señal) --- */
+.notice {
+  display: flex; gap: .625rem; align-items: flex-start;
+  padding: .75rem .875rem; border-radius: var(--radius-control);
+  border: 1px solid var(--border); background: var(--accent-soft); color: var(--text);
+}
+.notice > svg { width: 20px; height: 20px; flex: none; margin-top: .15rem; }
+.notice--ok { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+.notice--warn { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn); }
+.notice--error { background: var(--error-bg); border-color: var(--error); color: var(--error); }
+
+/* --- Garantías bajo el título --- */
+.garantias { display: flex; flex-wrap: wrap; gap: .375rem 1.25rem; margin-top: 1rem; font-weight: 700; }
+.garantias li { display: inline-flex; align-items: center; gap: .375rem; }
+.garantias svg { width: 18px; height: 18px; flex: none; color: var(--accent); }
+
+/* --- Los 17 apartados del art. 3.2 (a–q): el elemento propio de esta web.
+       Una regla de letras que se rellena a medida que se completa el documento
+       (la sección 03 del plan la conecta al formulario con .is-done). --- */
+.apartados { margin-top: 1.5rem; }
+.apartados-list {
+  display: grid; grid-template-columns: repeat(17, minmax(0, 1fr)); gap: 3px;
+  max-width: 34rem; padding: 0; list-style: none;
+}
+.apartados-list li {
+  display: grid; place-items: center; aspect-ratio: 1;
+  border: 1.5px solid var(--accent); border-radius: var(--radius-chip);
+  background: var(--paper); color: var(--accent);
+  font-size: clamp(.7rem, .55rem + .55vw, .95rem); font-weight: 700; line-height: 1;
+  transition: background-color .25s var(--ease-out), color .25s var(--ease-out);
+}
+.apartados-list li.is-done { background: var(--accent); color: var(--on-accent); }
+.apartados figcaption { margin-top: .5rem; font-size: .875rem; color: var(--muted); }
+
+/* --- Tarjeta de la herramienta: la «hoja» del formulario. La franja superior
+       en petróleo marca dónde se trabaja. Un único data-state la gobierna
+       (idle | working | done | error); los hijos con data-when="…" solo se ven
+       en los estados que nombran. --- */
+.tool-card {
+  background: var(--paper);
+  border: 1px solid var(--border); border-top: 4px solid var(--accent);
+  border-radius: var(--radius-card); box-shadow: var(--shadow-card);
+  padding: 1.25rem 1rem 1.5rem;
+}
+/* Mientras el script pinta la herramienta, la tarjeta reserva el alto de una pantalla: lo que va debajo
+   (anuncio y textos) no salta al aparecer el formulario (CLS). Sin JavaScript no se aplica. */
+@media (scripting: enabled) {
+  .tool-card:has(> form[hidden]) { min-height: 100svh; }
+}
+.tool-card[data-state="idle"]    [data-when]:not([data-when~="idle"]),
+.tool-card[data-state="working"] [data-when]:not([data-when~="working"]),
+.tool-card[data-state="done"]    [data-when]:not([data-when~="done"]),
+.tool-card[data-state="error"]   [data-when]:not([data-when~="error"]) { display: none !important; }
+
+/* --- Barra de progreso de pasos --- */
+.progress { display: grid; gap: .375rem; margin-bottom: 1.25rem; }
+.progress-label { font-size: .9375rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+/* En el generador la barra es la propia tira a–q: letras del paso en curso con borde doble y fondo
+   suave; las de los pasos superados, rellenas (el relleno escalonado es el único movimiento y
+   responde a pulsar «Siguiente»). */
+.tool-card .progress-label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 1rem; }
+.progress-count { font-weight: 400; }
+.tool-card .apartados-list { max-width: none; gap: 2px; }
+.apartados-list li { transition-delay: calc(var(--i, 0) * 18ms); }
+.apartados-list li.is-current { background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.progress-track { height: 6px; border-radius: 999px; background: var(--accent-soft); overflow: hidden; }
+.progress-bar { height: 100%; width: var(--pct, 0%); border-radius: inherit; background: var(--accent); transition: width .35s var(--ease-out); }
+
+/* --- Pasos del generador --- */
+.paso > legend { font-size: 1.375rem; margin-bottom: .25rem; }
+.paso-intro { margin-bottom: 1.25rem; color: var(--muted); }
+.paso > .notice { margin-bottom: 1.25rem; }
+.grupo { margin: 2rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 1.125rem; }
+/* «Soy una familia…»: cambia medio formulario, así que se presenta como una opción con marco */
+.opcion { padding: .125rem .875rem .625rem; border: 1px solid var(--input-border); border-radius: var(--radius-control); }
+.opcion:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.opcion .field-help { padding-left: calc(22px + .625rem); }
+.field--check { gap: 0; }
+.field-aviso:empty, .field-row-mensajes:empty { display: none; }
+.field-aviso .notice, .field-row-mensajes .notice { font-size: .9375rem; }
+.field :where(textarea) { field-sizing: content; max-height: 26rem; }
+/* Cantidad y unidad en la misma fila; los campos se alinean por abajo aunque la etiqueta ocupe dos líneas */
+.field-pair { margin-bottom: 1.25rem; }
+.field-row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 0 .75rem; align-items: end; }
+.field-row > .field { margin-bottom: 0; }
+.field-row-mensajes { display: grid; gap: .375rem; margin-top: .375rem; }
+.input-sufijo { position: relative; }
+.input-sufijo input { padding-right: 3.75rem; }
+.sufijo { position: absolute; top: 0; bottom: 0; right: .875rem; display: grid; place-items: center; color: var(--muted); pointer-events: none; }
+.lista-filas { display: grid; gap: .5rem; }
+.lista-filas:empty { display: none; }
+/* Cada complemento: en móvil, el nombre en una línea y el importe con «Quitar» debajo */
+.lista-fila {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nombre nombre" "importe quitar";
+  gap: .5rem .75rem; align-items: end;
+}
+.lista-fila + .lista-fila { padding-top: .75rem; border-top: 1px dashed var(--border); }
+.lista-fila > :nth-child(1) { grid-area: nombre; }
+.lista-fila > :nth-child(2) { grid-area: importe; }
+.lista-fila > :nth-child(3) { grid-area: quitar; }
+.lista-fila .field { margin-bottom: 0; }
+.lista-fila label { font-weight: 400; font-size: .9375rem; }
+.btn--small { min-height: 44px; padding-inline: 1rem; justify-self: start; }
+.bloqueo a { color: inherit; }
+.ayuda-convenio { margin-bottom: 1.25rem; font-size: .9375rem; }
+.error-summary { margin-bottom: 1.25rem; }
+.error-summary-title { font-weight: 700; }
+.error-summary ul { margin-top: .25rem; padding-left: 1.125rem; }
+.error-summary a { color: inherit; }
+.step-nav {
+  display: flex; flex-wrap: wrap-reverse; align-items: center; justify-content: space-between; gap: .75rem;
+  margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--border);
+}
+.step-nav .btn--primary { flex: 1 1 15rem; }
+.reanudar { margin-bottom: 1.25rem; }
+.ejemplo-rapido { margin: 0 0 1rem; color: var(--muted); }
+.ejemplo-rapido .btn--link { padding-inline: 0; }
+.reanudar-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-top: .625rem; }
+.card-foot { margin-top: .75rem; font-size: .9375rem; text-align: center; }
+.card-foot .btn--link { color: var(--muted); }
+.aviso-trabajador { margin-top: .75rem; font-size: .9375rem; color: var(--muted); }
+/* --- Paso 6: avisos, acciones y el papel --- */
+.revision-avisos { display: grid; gap: .5rem; margin-bottom: 1.5rem; }
+.revision-avisos h3 { font-size: 1.0625rem; }
+/* Descargar es lo más grande de la página después del título */
+.acciones-doc { display: grid; gap: .75rem; }
+.btn--grande { min-height: 56px; font-size: 1.125rem; }
+.acciones-secundarias { display: flex; flex-wrap: wrap; gap: .5rem .75rem; }
+.acciones-secundarias .btn { flex: 1 1 10rem; }
+.relacionadas { margin: 2rem 0 1.5rem; }
+.relacionadas h2 { font-size: 1.125rem; margin: 0 0 .5rem; }
+.relacionadas ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .5rem .75rem; }
+.relacionadas a { display: inline-block; padding: .35rem .7rem; border: 1px solid var(--border); border-radius: 999px; text-decoration: none; }
+.relacionadas a:hover { border-color: var(--accent); }
+.lista-guias { list-style: none; padding: 0; display: grid; gap: .875rem; }
+.lista-guias li { margin: 0; }
+.alquiler-resultado { margin-top: 1.25rem; display: grid; gap: .5rem; }
+.alquiler-resultado:focus { outline: none; }
+.alquiler-cifra { font-size: 1.25rem; }
+.alquiler-cifra strong { font-size: 1.5rem; }
+#bloque-carta { margin-top: 1.5rem; }
+.nota-doc { margin-top: .75rem; font-size: .9375rem; color: var(--muted); }
+.acciones-doc + .nota-doc { margin-bottom: 1.25rem; }
+.acciones-doc { margin-bottom: 1.25rem; }
+.cierre-doc { display: grid; justify-items: start; gap: .25rem; margin-top: 1.5rem; }
+.cierre-doc .nota-doc { margin-top: .5rem; }
+.cierre-doc .btn--link { justify-content: flex-start; padding-inline: 0; text-align: left; }
+/* El papel: la vista previa imita el PDF. Blanco también en modo oscuro, tinta negra y la misma
+   Helvetica, para que lo que se ve sea lo que se descarga. «Editar» usa la letra y el color de la
+   web: es interfaz, no documento. */
+.papel-marco { margin-top: 1.5rem; }
+.papel {
+  overflow-wrap: break-word;
+  --accent: #0b5d73; --accent-strong: #074557; --focus: #0a66c2;
+  --papel-tinta: #151515; --papel-gris: #5a5a5a; --papel-raya: #d6d6d6;
+  color-scheme: light;
+  background: #fff; color: var(--papel-tinta);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: .9375rem; line-height: 1.5;
+  padding: 1.75rem 1.25rem 1.5rem; border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .06), 0 20px 40px -24px rgba(0, 0, 0, .45);
+}
+.papel h3, .papel h4 { color: var(--papel-tinta); letter-spacing: 0; }
+.papel h3 { font-size: 1.0625rem; font-weight: 700; line-height: 1.25; }
+.papel-sub, .papel-cita, .papel-pie, .papel-firmas p { color: var(--papel-gris); }
+.papel-sub { margin-top: .25rem; font-size: .8125rem; }
+.papel-partes { display: grid; gap: .125rem; margin-top: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--papel-raya); }
+.papel-partes div { display: flex; flex-wrap: wrap; gap: 0 .375rem; }
+.papel-partes dt::after { content: ":"; }
+.papel-partes dd { margin: 0; }
+.papel-apartados { display: grid; gap: 1.125rem; margin-top: 1.25rem; padding: 0; list-style: none; }
+.papel-ap-cabecera { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; }
+.papel h4 { font-size: 1rem; font-weight: 700; line-height: 1.3; }
+.papel-cita { font-size: .75rem; }
+.papel-apartado > p:last-child { margin-top: .25rem; }
+.btn-editar {
+  flex: none; min-height: 44px; margin: -.625rem -.5rem -.625rem 0; padding: 0 .625rem;
+  border: 0; border-radius: 6px; background: none; color: var(--accent); cursor: pointer;
+  font: 700 .875rem/1 var(--sans); text-decoration: underline; text-underline-offset: 3px;
+}
+.btn-editar:hover { background: #e3f0f3; }
+.papel-recibi { margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--papel-raya); }
+.papel-recibi > p { margin-top: .375rem; }
+.papel-lugar { margin-top: 1rem !important; }
+.papel-firmas { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 3.25rem; }
+.papel-firmas p { padding-top: .375rem; border-top: 1px solid var(--papel-tinta); font-size: .8125rem; }
+.papel-pie { margin-top: 1.75rem; font-size: .75rem; }
+@media (min-width: 720px) { .papel { padding: 3rem 3.25rem 2.5rem; } .papel h3 { font-size: 1.25rem; } }
+/* La carta de la persona trabajadora: el mismo papel, con forma de carta; lo que falta por rellenar, en gris */
+.papel--carta > p + p { margin-top: .75rem; }
+.carta-fecha { text-align: right; }
+.carta-asunto { font-weight: 700; }
+.papel .hueco { color: #5f5f5f; font-style: italic; } /* 6,4:1 sobre blanco */
+.carta-firma { margin-top: 3rem; }
+.carta-firma p:first-child { display: inline-block; min-width: 14rem; padding-top: .375rem; border-top: 1px solid var(--papel-tinta); }
+.carta-recepcion {
+  display: grid; grid-template-columns: 1fr 1fr; gap: .25rem 1rem;
+  margin-top: 2rem; padding: .75rem 1rem 2.25rem; border: 1px solid var(--papel-raya);
+  font-size: .8125rem; color: var(--papel-gris);
+}
+.carta-recepcion p:first-child { grid-column: 1 / -1; font-weight: 700; }
+#form-carta .check { margin-bottom: 1rem; }
+#form-carta > .notice { margin-bottom: 1rem; }
+/* Comunicar un cambio: una casilla por apartado; al marcarla, debajo aparece cómo queda */
+#form-cambio > .opcion { margin-bottom: 1.25rem; }
+.cambios { margin: .5rem 0 1.5rem; }
+.cambios > .field-help { margin-bottom: .5rem; }
+.cambio { border-top: 1px solid var(--border); }
+.cambio:last-child { border-bottom: 1px solid var(--border); }
+.cambio:has(> .check input:checked) > .check { font-weight: 650; }
+.cambio-texto { margin: 0 0 1rem; padding-left: calc(22px + .625rem); }
+.papel-intro { margin-top: 1rem; }
+/* Logo de la empresa (opcional): en el papel, como en el PDF (14 mm de alto como máximo); miniatura en el campo */
+.papel-logo { display: block; max-height: 3.25rem; max-width: 12rem; margin-bottom: 1rem; }
+.campo-logo { min-width: 0; }
+.campo-logo input[type="file"] { width: 100%; min-width: 0; font-size: .9375rem; color: var(--muted); }
+.campo-logo input[type="file"]::file-selector-button {
+  min-height: 44px; margin-right: .75rem; padding: .5rem 1rem; cursor: pointer;
+  border: 1.5px solid var(--accent); border-radius: var(--radius-control); background: transparent;
+  color: var(--accent); font: 600 .9375rem/1.2 var(--sans);
+}
+.campo-logo input[type="file"]:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.logo-fila { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; }
+.logo-fila:has(> :not([hidden])) { margin-top: .5rem; }
+.logo-mini { max-height: 3rem; max-width: 10rem; padding: .25rem; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+/* Contenido bajo las herramientas. «Cómo funciona» sí es una secuencia: tres pasos numerados */
+.contenido-herramienta { margin-top: .5rem; }
+.pasos-como { display: grid; gap: 1rem; padding: 0; list-style: none; counter-reset: paso; }
+.pasos-como li { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); gap: .875rem; align-items: start; counter-increment: paso; }
+.pasos-como svg { width: 2.5rem; height: 2.5rem; padding: .5rem; border-radius: var(--radius-control); background: var(--accent-soft); color: var(--accent); }
+.pasos-como h3 { font-size: 1.0625rem; }
+.pasos-como h3::before { content: counter(paso) ". "; color: var(--accent); }
+.pasos-como p { margin-top: .125rem; color: var(--muted); }
+.afiliados-lista { display: grid; gap: .5rem; padding: 0; list-style: none; }
+.salidas-404 { display: grid; justify-items: start; gap: .75rem; margin-top: 1.5rem; padding: 0; list-style: none; }
+.apartados-texto { columns: 2 15rem; column-gap: 2rem; padding-left: 0; list-style: none; }
+.apartados-texto li { break-inside: avoid; padding-block: .125rem; }
+/* Versión para imprimir (si el PDF falla): solo los dos ejemplares del papel */
+#impresion { display: none; }
+@media print {
+  body.imprimir-papel > :not(#impresion) { display: none !important; }
+  body.imprimir-papel #impresion { display: block; }
+  .impresion-ejemplar + .impresion-ejemplar { break-before: page; }
+  .papel-rotulo { margin-bottom: .75rem; font: 700 .8125rem/1.4 "Helvetica Neue", Helvetica, Arial, sans-serif; color: #5a5a5a; }
+  #impresion .papel { padding: 0; box-shadow: none; }
+  .papel-apartado { break-inside: avoid; }
+}
+
+/* --- Sello de privacidad --- */
+.badge-privacy { display: flex; gap: .5rem; align-items: flex-start; margin-top: 1rem; font-size: .9375rem; color: var(--muted); }
+.badge-privacy svg { width: 18px; height: 18px; flex: none; margin-top: .15rem; color: var(--accent); }
+
+/* --- Hueco de anuncio: vacío hasta pegar AdSense; reserva altura para que nada salte --- */
+/* Anuncios automáticos de AdSense: Google los coloca solo; aquí solo se evita que desborden la columna. */
+.google-auto-placed { max-width: 100%; overflow: hidden; }
+
+/* Netlify inyecta en los proyectos gratuitos una etiqueta flotante «Powered by Netlify» que en el móvil tapa
+   el botón «Rechazar» del banner de cookies. Se oculta aquí además de en el panel de Netlify. */
+#nl-badge-frame { display: none !important; }
+
+/* --- Banner de cookies: barra inferior compacta, al final del body con sticky (nunca tapa el final
+   de la página). Aceptar, Rechazar y Configurar con el mismo peso visual, como pide la AEPD. --- */
+.consent {
+  position: sticky; bottom: 0; z-index: 20;
+  padding-block: .875rem 1rem;
+  background: var(--paper); border-top: 1px solid var(--border);
+  box-shadow: 0 -12px 28px -18px rgba(19, 32, 40, .45);
+}
+.consent p { font-size: .9375rem; }
+.consent-opciones { margin-top: .5rem; font-size: .9375rem; }
+.consent-acciones { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; margin-top: .75rem; max-width: 30rem; }
+.consent-acciones .btn { padding-inline: .5rem; }
+@media print { .consent { display: none; } }
+
+/* Plantilla de registro de jornada (/registro-horario/): con «Imprimir» sale solo la hoja, en blanco y negro */
+.hoja-registro { margin: 1.5rem 0; }
+.hoja-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .25rem 1.5rem; margin: 0 0 1rem; }
+.hoja-datos p { margin: 0; padding: .35rem 0; border-bottom: 1px solid var(--border); }
+.hoja-registro .tabla-scroll td { height: 1.9rem; padding-block: .2rem; }
+.hoja-registro .tabla-scroll tbody tr + tr th, .hoja-registro .tabla-scroll tbody tr + tr td { border-top: 1px solid var(--border); }
+.hoja-pie { margin-top: 1rem; }
+@media print {
+  body.imprimir-hoja .site-header, body.imprimir-hoja .site-footer, body.imprimir-hoja .skip-link,
+  body.imprimir-hoja main article > :not(.hoja-registro), body.imprimir-hoja .hoja-acciones { display: none !important; }
+  body.imprimir-hoja, body.imprimir-hoja .hoja-registro, body.imprimir-hoja .tabla-scroll { background: #fff; color: #000; border: 0; }
+  body.imprimir-hoja .hoja-registro { margin: 0; font: 10pt/1.3 "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  body.imprimir-hoja .tabla-scroll { overflow: visible; }
+  body.imprimir-hoja .tabla-scroll th, body.imprimir-hoja .tabla-scroll td { border: 1px solid #000 !important; padding: .1rem .3rem; height: 1.45rem; }
+  body.imprimir-hoja .tabla-scroll thead th { background: #eee; }
+  body.imprimir-hoja .hoja-datos p { border-bottom: 1px solid #000; }
+}
+
+/* =============================================================
+   7. Secciones
+   ============================================================= */
+
+/* --- Cabecera --- */
+.site-header { background: var(--paper); border-bottom: 1px solid var(--border); }
+.header-inner {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: .25rem .75rem; min-height: 60px; padding-block: .5rem;
+}
+.site-nav ul { display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
+.site-nav a {
+  display: inline-flex; align-items: center; min-height: 44px;
+  color: var(--text); font-weight: 700; font-size: .9375rem; text-decoration: none;
+}
+.site-nav a:hover { color: var(--accent); }
+.site-nav a[aria-current="page"] { color: var(--accent); text-decoration: underline; text-decoration-thickness: 2px; }
+/* En móvil «Guía RD 723/2026» se lee «Guía»; el resto sigue ahí para lectores de pantalla */
+.nav-extra {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* --- Portada --- */
+.hero { padding-block: 1.75rem 1.25rem; }
+.hero .lead { margin-top: .75rem; }
+
+/* --- Guía y páginas de texto (lectura larga en la misma columna) --- */
+.migas ol { display: flex; flex-wrap: wrap; align-items: center; gap: 0 .5rem; list-style: none; padding: 0; font-size: .875rem; color: var(--muted); }
+.migas li { display: inline-flex; align-items: center; min-height: 44px; }
+.migas li + li::before { content: "/"; margin-right: .5rem; color: var(--border); }
+.migas a { display: inline-flex; align-items: center; min-height: 44px; color: var(--muted); }
+.page-head { padding-block: .75rem 1rem; }
+.page-head h1 { margin-top: .5rem; }
+.updated { margin-top: .75rem; font-size: .875rem; color: var(--muted); }
+.cta-box { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
+.toc {
+  margin-top: 2rem; padding: 1rem 1.25rem;
+  background: var(--paper); border: 1px solid var(--border); border-radius: var(--radius-control);
+}
+.toc h2 { font-size: 1rem; letter-spacing: 0; }
+.toc ol { margin-top: .25rem; padding-left: 1.25rem; display: grid; gap: .5rem; }
+.toc a { display: inline-flex; align-items: center; min-height: 44px; }
+.prose { margin-top: 1rem; }
+.prose > * + * { margin-top: 1rem; }
+/* Líneas de lectura de 60–75 caracteres: el texto corrido no ocupa todo el ancho de la columna */
+.prose > p, .prose > ul, .prose > ol:not(.apartados-texto), .faq p, .lista-apartados p { max-width: 36rem; }
+.prose h2 { margin-top: 2.75rem; scroll-margin-top: 1rem; }
+.prose h2 + * { margin-top: .75rem; }
+.prose > :first-child { margin-top: 1.25rem; }
+.prose ul:not([class]), .prose ol:not([class]) { padding-left: 1.25rem; }
+.prose ul:not([class]) li + li, .prose ol:not([class]) li + li { margin-top: .5rem; }
+/* Tablas de equivalencias: se desplazan dentro de su caja en pantallas estrechas, nunca la página */
+.tabla-scroll { overflow-x: auto; background: var(--paper); border: 1px solid var(--border); border-radius: var(--radius-card); }
+.tabla-scroll:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.tabla-scroll table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.tabla-scroll th, .tabla-scroll td { padding: .65rem .85rem; text-align: left; vertical-align: top; }
+.tabla-scroll thead th { background: var(--accent-soft); color: var(--text); }
+.tabla-scroll tbody tr + tr td { border-top: 1px solid var(--border); }
+/* Los 17 apartados en la guía: la misma casilla de letra que la tira de la portada */
+.lista-apartados { list-style: none; padding: 0; display: grid; gap: 1.125rem; }
+.lista-apartados li { display: grid; grid-template-columns: 2.25rem 1fr; gap: .875rem; align-items: start; }
+.lista-apartados .letra {
+  display: grid; place-items: center; width: 2.25rem; aspect-ratio: 1;
+  border: 1.5px solid var(--accent); border-radius: var(--radius-chip);
+  background: var(--paper); color: var(--accent); font-weight: 700; line-height: 1;
+}
+.lista-apartados h3 { font-size: 1.0625rem; line-height: 1.3; margin-top: .3rem; }
+.lista-apartados p { margin-top: .25rem; }
+.faq details { border-top: 1px solid var(--border); padding-block: .25rem; }
+.faq details:last-child { border-bottom: 1px solid var(--border); }
+.faq summary { display: flex; align-items: center; min-height: 48px; font-weight: 700; cursor: pointer; }
+.faq summary::marker { color: var(--accent); }
+.faq details p { padding-bottom: .875rem; }
+.fuentes { font-size: .9375rem; }
+.fuentes li + li { margin-top: .5rem; }
+.fuentes a { display: inline-flex; align-items: center; min-height: 44px; padding-block: .25rem; }
+/* Tablas de las páginas legales: si no caben en móvil se desplazan dentro de su caja, no la página */
+.tabla { overflow-x: auto; }
+.tabla table { width: 100%; border-collapse: collapse; font-size: .9375rem; }
+.tabla caption { text-align: left; font-weight: 700; padding-bottom: .375rem; }
+.tabla th, .tabla td { text-align: left; vertical-align: top; padding: .5rem .625rem .5rem 0; border-bottom: 1px solid var(--border); }
+.tabla code { font-size: .875em; white-space: nowrap; }
+.datos-titular { list-style: none; padding: 1rem 1.25rem; background: var(--paper); border: 1px solid var(--border); border-radius: var(--radius-control); }
+.cta-final {
+  margin-top: 3rem; padding: 1.25rem 1.25rem 1.5rem;
+  background: var(--paper); border: 1px solid var(--border); border-top: 4px solid var(--accent);
+  border-radius: var(--radius-card);
+}
+.cta-final h2 { font-size: 1.25rem; }
+.cta-final p { margin-top: .5rem; }
+/* Portada: accesos para quien llega con otro caso (debajo de las garantías, sin empujar el generador) */
+.otros-casos { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 .75rem; margin-top: .75rem; font-size: .9375rem; }
+.otros-casos p { color: var(--muted); }
+.otros-casos ul { display: flex; flex-wrap: wrap; gap: .125rem .875rem; list-style: none; padding: 0; margin: 0; }
+.otros-casos a { display: inline-flex; align-items: center; min-height: 2rem; } /* 32 px: WCAG 2.2 pide 24 */
+/* Compartir la página: enlaces normales (sin scripts de terceros) */
+.compartir { margin-top: 1.5rem; }
+.compartir p { font-weight: 700; }
+.compartir-lista { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; list-style: none; padding: 0; margin-top: .25rem; }
+.compartir-lista a { display: inline-flex; align-items: center; min-height: 44px; }
+/* Código para enlazar la web (Quiénes somos) */
+.codigo-enlace { width: 100%; min-height: 8rem; font: .875rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding: .75rem; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--paper); color: var(--text); resize: vertical; }
+.codigo-enlace + .btn { margin-top: .5rem; }
+.prose > .field-label { display: block; margin: 1.25rem 0 .35rem; }
+
+/* --- Pie --- */
+.site-footer {
+  margin-top: 4rem; padding-block: 2rem 2.5rem;
+  border-top: 1px solid var(--border);
+  font-size: .9375rem; color: var(--muted);
+}
+.footer-links { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; margin-bottom: .75rem; }
+.footer-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--muted); }
+.footer-links a:hover { color: var(--accent); }
+.footer-links--recursos { margin-bottom: 0; }
+.footer-links--recursos a { color: var(--text); font-weight: 600; }
+.footer-links--dudas { margin-top: .75rem; }
+.footer-links--dudas a { font-weight: 400; }
+.site-footer .fine-print + .fine-print { margin-top: .5rem; }
+
+/* =============================================================
+   8. Responsive (móvil primero; pasos fijos de la skill: 540 / 720 / 960)
+   ============================================================= */
+@media (min-width: 540px) {
+  /* el enlace es inline-flex y se come el espacio inicial del span: se repone con margen */
+  .nav-extra { position: static; width: auto; height: auto; margin: 0; overflow: visible; clip: auto; white-space: normal; }
+  .site-nav ul { gap: .25rem 1.5rem; }
+  .step-nav .btn--primary { flex: 0 1 auto; margin-left: auto; }
+  .lista-fila { grid-template-columns: minmax(0, 1fr) minmax(0, 8rem) auto; grid-template-areas: "nombre importe quitar"; }
+}
+@media (min-width: 720px) {
+  :root { --gutter: 24px; }
+  .hero { padding-block: 3rem 1.75rem; }
+  .apartados-list, .tool-card .apartados-list { gap: 4px; }
+  .tool-card { padding: 1.75rem 2rem 2rem; }
+}
+@media (min-width: 960px) {
+}
+
+/* =============================================================
+   9. Movimiento reducido
+   Si el sistema pide menos movimiento, se quitan las transiciones (también el relleno escalonado
+   de la tira a–q) y el desplazamiento suave. El resto de la web no tiene animaciones.
+   ============================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: .01ms !important; transition-delay: 0s !important;
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- Comprobador de cumplimiento --- */
+.comprobador { margin-top: 1.5rem; display: grid; gap: 1rem; }
+.check-pregunta { border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--paper); padding: 1rem 1.25rem 1.1rem; min-width: 0; }
+.check-pregunta legend { font-weight: 700; padding-inline: .25rem; }
+.check-opciones { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+.check-opciones label { display: inline-flex; align-items: center; gap: .4rem; min-height: 44px; padding: 0 1rem; border: 1px solid var(--input-border); border-radius: var(--radius-control); cursor: pointer; }
+.check-opciones label:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); }
+.check-opciones input { accent-color: var(--accent); width: 1.125rem; height: 1.125rem; }
+.comprobador-resultado { margin-top: 1.5rem; padding: 1.25rem; background: var(--paper); border: 1px solid var(--border); border-top: 4px solid var(--accent); border-radius: var(--radius-card); }
+.comprobador-resultado:focus { outline: none; }
+.comprobador-resultado > * + * { margin-top: .75rem; }
+.check-pendientes { padding-left: 1.25rem; }
+.check-pendientes li + li { margin-top: .75rem; }
+
+/* --- Publicidad (js/ads.js): oculta hasta que AdSense esté activo; reserva alto para no mover el texto --- */
+.ad-slot { margin: 2rem 0; min-height: 280px; }
+.ad-slot[hidden] { display: none; }
+.ad-etiqueta { font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: .25rem; }

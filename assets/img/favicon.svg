@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <style>
+    .acc { fill: #0b5d73; }
+    .fold { fill: #ffffff; opacity: .35; }
+    .tick { fill: none; stroke: #ffffff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    @media (prefers-color-scheme: dark) {
+      .acc { fill: #5cc3d9; }
+      .fold { fill: #0e1920; }
+      .tick { stroke: #06222b; }
+    }
+  </style>
+  <path class="acc" d="M6 1h14l8 8v20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/>
+  <path class="fold" d="M20 1v6a2 2 0 0 0 2 2h6z"/>
+  <path class="tick" d="M9 17.5l4.5 4.5L22.5 13"/>
+</svg>

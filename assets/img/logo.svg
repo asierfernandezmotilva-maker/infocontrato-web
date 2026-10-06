@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40" width="200" height="40" role="img" aria-labelledby="logo-title">
+  <title id="logo-title">InfoContrato</title>
+  <style>
+    .acc { fill: #0b5d73; }
+    .fold { fill: #ffffff; opacity: .35; }
+    .tick { fill: none; stroke: #ffffff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .ink { fill: #13222c; }
+    @media (prefers-color-scheme: dark) {
+      .acc { fill: #5cc3d9; }
+      .fold { fill: #0e1920; }
+      .tick { stroke: #06222b; }
+      .ink { fill: #e6eef2; }
+    }
+  </style>
+  <path class="acc" d="M8 3h15l9 9v23a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+  <path class="fold" d="M23 3v7a2 2 0 0 0 2 2h7z"/>
+  <path class="tick" d="M11.5 22.5l4.5 4.5 9.5-10"/>
+  <text class="ink" x="42" y="27" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="-0.3">InfoContrato</text>
+</svg>

@@ -10,7 +10,7 @@
     gaId: "G-55FQ2C5YG5",              // ID de medición de Google Analytics 4 («G-…»); vacío = sin analítica. Pasos en js/analytics.js
     adsense: "",           // «ca-pub-4424403733078041» cuando AdSense APRUEBE la web: carga los anuncios y cambia el banner propio por el de Google (js/consent.js)
     adsenseSlots: {},      // números de bloque de AdSense, p. ej. { articulo: "1234567890" } (ver js/ads.js)
-    updated: "2026-10-06", // fecha visible «Actualizado el…»; se pone la del día de publicación (sección 11)
+    updated: "2026-10-07", // fecha visible «Actualizado el…»; se pone la del día de publicación (sección 11)
     palette: { accent: "#0b5d73", accentDark: "#5cc3d9" } // igual que --accent en styles.css (claro / oscuro)
   };
 })();
@@ -68,11 +68,13 @@
     },
 
     // Alquiler de vivienda (/actualizar-alquiler/). Los índices del INE están en lib/indices-alquiler.js
-    // (tools/actualizar-indices.py, cada mes). topeExtra: límite extraordinario a la actualización anual que fije un
-    // real decreto-ley, p. ej. { desde: "2026-10-08", hasta: "2027-12-31", maximo: 2, norma: "Real Decreto-ley X/2026" }.
-    // null = no hay ninguno en vigor. El RDL 26/2026 (2 %) lo derogó el Congreso el 02/10/2026 (BOE-A-2026-20526).
+    // (tools/actualizar-indices.py, cada mes). topeExtra: límite extraordinario a la actualización anual que fija un
+    // real decreto-ley; null = no hay ninguno en vigor. El RDL 26/2026 (2 %) lo derogó el Congreso el 02/10/2026
+    // (BOE-A-2026-20526); el RDL 29/2026 (BOE 07/10/2026, BOE-A-2026-20823, en vigor el 08/10/2026) lo repone en su
+    // disposición final sexta: actualizaciones entre el 08/10/2026 y el 31/12/2027, máximo 2 % si no hay nuevo pacto
+    // (y 0 % si la renta supera el límite del índice de precios de referencia). Si el Congreso no lo convalida, poner null.
     alquiler: {
-      topeExtra: null
+      topeExtra: { desde: "2026-10-08", hasta: "2027-12-31", maximo: 2, norma: "disposición final sexta del Real Decreto-ley 29/2026" }
     },
 
     enlaces: {
@@ -2170,7 +2172,7 @@
   var EJEMPLO = {
     modoHogar: false, empresaNombre: "Bar La Esquina, S.L. (ejemplo)", empresaNif: "B00000000",
     empresaDomicilio: "C/ Mayor 12, 28013 Madrid", centroIgualDomicilio: true, provincia: "Madrid", numTrabajadores: 4,
-    trabajadorNombre: "Lucía Martín Pérez (ejemplo)", fechaInicio: "2026-10-06", tipoContrato: "indefinido",
+    trabajadorNombre: "Lucía Martín Pérez (ejemplo)", fechaInicio: "2026-10-07", tipoContrato: "indefinido",
     puesto: "Camarera de barra", categoria: "Grupo II, camarero/a", pruebaCantidad: 2, pruebaUnidad: "meses",
     funciones: "Atención a clientes en barra y sala, preparación de bebidas y cafés, cobro y limpieza de la zona de trabajo.",
     salarioBase: 1400, salarioPeriodo: "mes", complementos: [{ nombre: "Plus de transporte", importe: 60 }], pagasExtra: 2,

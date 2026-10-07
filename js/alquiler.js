@@ -6,6 +6,7 @@
   var MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
   var LEY_2023 = "2023-05-26";   // entrada en vigor de la Ley 12/2023: desde aquí el tope es el IRAV (DA 11.ª LAU)
   var RDL_2019 = "2019-03-06";   // entrada en vigor del RDL 7/2019: desde aquí el tope es el IPC (art. 18.1 LAU)
+  var RDL_2026 = "2026-10-08";   // entrada en vigor del RDL 29/2026: las actualizaciones desde aquí se limitan al IRAV en todos los contratos
   var DESDE = "2025-01-01";      // primeras actualizaciones con IRAV publicado
 
   function nombreMes(m) { var p = m.split("-"); return MESES[+p[1] - 1] + " de " + p[0]; }
@@ -32,16 +33,20 @@
     // art. 18.1: solo se actualiza «en la fecha en que se cumpla cada año de vigencia»; se avisa sin bloquear
     var aviso = e.firma.slice(5) !== e.fecha.slice(5) ? "Ojo: la renta solo se actualiza el día en que se cumple cada año de contrato (art. 18.1 LAU)." : null;
     if (e.clausula === "ninguna") return { estado: "sin-clausula", aviso: aviso };
-    if (e.clausula === "generica") return { estado: "generica", aviso: aviso };
+    // Desde el RDL 29/2026: el IRAV limita todos los contratos, también los anteriores a 2023 (DT 4.ª Ley 12/2023,
+    // redactada por su art. 4.Dos), y la cláusula que no dice índice se actualiza con el IRAV (art. 18.1 LAU)
+    var reforma = e.fecha >= RDL_2026;
+    if (e.clausula === "generica" && !reforma) return { estado: "generica", aviso: aviso };
 
     var mes = mesReferencia(e.fecha);
-    var regimen = e.firma >= LEY_2023 ? "irav" : e.firma >= RDL_2019 ? "ipc" : "libre";
-    var pactado = e.clausula === "fijo" ? e.fijo : I[e.clausula][mes];
+    var regimen = reforma || e.firma >= LEY_2023 ? "irav" : e.firma >= RDL_2019 ? "ipc" : "libre";
+    var indice = e.clausula === "generica" ? "irav" : e.clausula;
+    var pactado = e.clausula === "fijo" ? e.fijo : I[indice][mes];
     if (e.clausula === "fijo" && !isFinite(pactado)) return { estado: "error", mensaje: "Escribe el porcentaje fijo del contrato." };
     var limite = regimen === "libre" ? null : I[regimen][mes];
     if (pactado === undefined || limite === undefined) return { estado: "sin-dato", mes: mes, aviso: aviso };
 
-    var r = { estado: "ok", mes: mes, regimen: regimen, pactado: pactado, limite: limite, aviso: aviso };
+    var r = { estado: "ok", mes: mes, regimen: regimen, reforma: reforma, pactado: pactado, limite: limite, aviso: aviso };
     r.pct = limite !== null && pactado > limite ? limite : pactado;
     r.limitado = r.pct !== pactado;
     if (tope && e.fecha >= tope.desde && e.fecha <= tope.hasta && r.pct > tope.maximo) {
@@ -54,6 +59,7 @@
 
   function carta(e, r) {
     var origen = e.clausula === "fijo" ? "el porcentaje fijo pactado" : "la variación anual del " + (e.clausula === "ipc" ? "IPC" : "IRAV") + " de " + nombreMes(r.mes) + " publicada por el INE";
+    if (e.clausula === "generica") origen += ", que es el índice aplicable cuando el contrato no concreta ninguno";
     var tope = r.topeExtra ? ", limitado al " + pct(r.topeExtra.maximo) + " por el " + r.topeExtra.norma
       : r.limitado ? ", limitado al " + (r.regimen === "irav" ? "IRAV" : "IPC") + " de " + nombreMes(r.mes) + " (" + pct(r.limite) + ")" : "";
     return "Asunto: actualización anual de la renta del alquiler\n\n" +
@@ -93,7 +99,7 @@
     bloqueCarta.hidden = r.estado !== "ok";
     if (r.estado === "error") salida.append(p(r.mensaje, "notice notice--error"));
     else if (r.estado === "sin-clausula") salida.append(p("Si el contrato no dice nada sobre la actualización, la renta no se actualiza (art. 18.1 LAU). Sigues pagando " + euros(e.renta) + " al mes."));
-    else if (r.estado === "generica") salida.append(p("Si el contrato prevé actualizar la renta pero no dice con qué índice, se aplica la variación anual del Índice de Garantía de Competitividad, que publica el INE (art. 18.1 LAU). Esta calculadora no lo incluye."));
+    else if (r.estado === "generica") salida.append(p("Hasta el 7 de octubre de 2026, si el contrato preveía actualizar la renta pero no decía con qué índice, se aplicaba la variación anual del Índice de Garantía de Competitividad, que publica el INE (art. 18.1 LAU). Esta calculadora no lo incluye. Desde el 8 de octubre de 2026 se aplica el IRAV: pon esa fecha de actualización o posterior."));
     else if (r.estado === "sin-dato") salida.append(p("El INE todavía no ha publicado el índice de " + nombreMes(r.mes) + ". Se publica hacia el día 15 del mes siguiente: vuelve entonces.", "notice notice--warn"));
     else {
       var cifra = document.createElement("p"), b = document.createElement("strong");
@@ -101,11 +107,13 @@
       b.textContent = euros(r.nueva) + " al mes";
       cifra.append("Nueva renta: ", b, " (" + (r.diferencia >= 0 ? "+" : "") + euros(r.diferencia) + ", " + pct(r.pct) + ")");
       salida.append(cifra);
-      salida.append(p(r.topeExtra ? "Se aplica el tope extraordinario del " + pct(r.topeExtra.maximo) + " (" + r.topeExtra.norma + "), salvo que las partes pacten otra cosa."
+      salida.append(p(r.topeExtra ? "Se aplica el tope extraordinario del " + pct(r.topeExtra.maximo) + " (" + r.topeExtra.norma + "), que rige si no hay un nuevo pacto entre las partes. Si la renta supera el límite del índice de precios de referencia de la vivienda, no procede ninguna subida."
+        : r.regimen === "irav" && r.reforma && e.firma < LEY_2023 ? "Desde el 8 de octubre de 2026 el tope del IRAV se aplica a todos los contratos, también a los firmados antes del 26 de mayo de 2023 (disposición transitoria cuarta de la Ley 12/2023, redactada por el Real Decreto-ley 29/2026): la subida no puede superar el " + pct(r.limite) + " de " + nombreMes(r.mes) + "."
         : r.regimen === "irav" ? "Tu contrato es del 26 de mayo de 2023 o posterior: la subida no puede superar el IRAV (" + pct(r.limite) + " en " + nombreMes(r.mes) + ")."
         : r.regimen === "ipc" ? "Tu contrato es de entre el 6 de marzo de 2019 y el 25 de mayo de 2023: la subida no puede superar el IPC (" + pct(r.limite) + " en " + nombreMes(r.mes) + ")."
         : "Tu contrato es anterior al 6 de marzo de 2019: se aplica lo pactado, sin el tope del IPC ni del IRAV."));
-      if (e.clausula !== "fijo") salida.append(p("Índice pactado: " + (e.clausula === "ipc" ? "IPC" : "IRAV") + " de " + nombreMes(r.mes) + " = " + pct(r.pactado) + ". Es el último que el INE suele tener publicado en esa fecha; si la actualización cae cerca del día 15, compruébalo.", "fine-print"));
+      if (e.clausula === "generica") salida.append(p("El contrato prevé actualizar la renta sin decir con qué índice: desde el 8 de octubre de 2026 se aplica el IRAV (art. 18.1 LAU, redactado por el Real Decreto-ley 29/2026).", "fine-print"));
+      if (e.clausula !== "fijo") salida.append(p("Índice " + (e.clausula === "generica" ? "aplicable" : "pactado") + ": " + (e.clausula === "ipc" ? "IPC" : "IRAV") + " de " + nombreMes(r.mes) + " = " + pct(r.pactado) + ". Es el último que el INE suele tener publicado en esa fecha; si la actualización cae cerca del día 15, compruébalo.", "fine-print"));
       if (r.pct < 0) salida.append(p("El índice es negativo: la renta baja.", "fine-print"));
       salida.append(p("La nueva renta se paga a partir del mes siguiente al de la comunicación por escrito (art. 18.2 LAU).", "fine-print"));
       document.getElementById("carta-alquiler").value = carta(e, r);

@@ -10,7 +10,7 @@
     gaId: "G-55FQ2C5YG5",              // ID de medición de Google Analytics 4 («G-…»); vacío = sin analítica. Pasos en js/analytics.js
     adsense: "",           // «ca-pub-4424403733078041» cuando AdSense APRUEBE la web: carga los anuncios y cambia el banner propio por el de Google (js/consent.js)
     adsenseSlots: {},      // números de bloque de AdSense, p. ej. { articulo: "1234567890" } (ver js/ads.js)
-    updated: "2026-10-06", // fecha visible «Actualizado el…»; se pone la del día de publicación (sección 11)
+    updated: "2026-10-07", // fecha visible «Actualizado el…»; se pone la del día de publicación (sección 11)
     palette: { accent: "#0b5d73", accentDark: "#5cc3d9" } // igual que --accent en styles.css (claro / oscuro)
   };
 })();
@@ -68,11 +68,13 @@
     },
 
     // Alquiler de vivienda (/actualizar-alquiler/). Los índices del INE están en lib/indices-alquiler.js
-    // (tools/actualizar-indices.py, cada mes). topeExtra: límite extraordinario a la actualización anual que fije un
-    // real decreto-ley, p. ej. { desde: "2026-10-08", hasta: "2027-12-31", maximo: 2, norma: "Real Decreto-ley X/2026" }.
-    // null = no hay ninguno en vigor. El RDL 26/2026 (2 %) lo derogó el Congreso el 02/10/2026 (BOE-A-2026-20526).
+    // (tools/actualizar-indices.py, cada mes). topeExtra: límite extraordinario a la actualización anual que fija un
+    // real decreto-ley; null = no hay ninguno en vigor. El RDL 26/2026 (2 %) lo derogó el Congreso el 02/10/2026
+    // (BOE-A-2026-20526); el RDL 29/2026 (BOE 07/10/2026, BOE-A-2026-20823, en vigor el 08/10/2026) lo repone en su
+    // disposición final sexta: actualizaciones entre el 08/10/2026 y el 31/12/2027, máximo 2 % si no hay nuevo pacto
+    // (y 0 % si la renta supera el límite del índice de precios de referencia). Si el Congreso no lo convalida, poner null.
     alquiler: {
-      topeExtra: null
+      topeExtra: { desde: "2026-10-08", hasta: "2027-12-31", maximo: 2, norma: "disposición final sexta del Real Decreto-ley 29/2026" }
     },
 
     enlaces: {
@@ -701,7 +703,12 @@
   }
 
   // ---- Duración del alquiler de vivienda: arts. 9, 10 y 11 de la Ley de Arrendamientos Urbanos (contratos desde el 6/3/2019) ----
+  // El RDL 28/2026 reescribe el art. 10 desde el 15/11/2026: si el periodo mínimo vence desde esa fecha, el casero avisa con
+  // 6 meses (4 si el vencimiento es anterior al 15/05/2027, DT única.2), la prórroga tácita es de 5 o 7 años y, si el casero
+  // no renueva sin causa del art. 10.2, indemniza. Si el mínimo venció antes, el contrato sigue en la prórroga tácita antigua
+  // (por años, hasta 3) hasta que termine (DT única.3).
   // e = { inicio: "AAAA-MM-DD", anios: duración pactada en años, juridica: el casero es una empresa }
+  var ART10_2026 = "2026-11-15";
   function duracionAlquiler(e) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(e.inicio || "")) return { error: "Escribe la fecha de inicio del contrato." };
     if (e.inicio < "2019-03-06") return { error: "Los contratos firmados antes del 6 de marzo de 2019 tienen otros plazos. Esta calculadora cubre los firmados desde esa fecha." };
@@ -710,9 +717,11 @@
     var meses = Math.round(e.anios * 12);
     var r = { minimo: minimo, finPactado: sumarFecha(e.inicio, meses), prorrogaObligatoria: meses < minimo * 12 };
     r.finMinimo = r.prorrogaObligatoria ? sumarFecha(e.inicio, minimo * 12) : r.finPactado;
-    r.avisoCasero = sumarFecha(r.finMinimo, -4);
+    r.nuevoArt10 = r.finMinimo >= ART10_2026;
+    r.mesesAvisoCasero = r.nuevoArt10 && r.finMinimo >= sumarFecha(ART10_2026, 6) ? 6 : 4;
+    r.avisoCasero = sumarFecha(r.finMinimo, -r.mesesAvisoCasero);
     r.avisoInquilino = sumarFecha(r.finMinimo, -2);
-    r.finTacita = sumarFecha(r.finMinimo, 36);
+    r.finTacita = sumarFecha(r.finMinimo, r.nuevoArt10 ? minimo * 12 : 36);
     r.desistimiento = sumarFecha(e.inicio, 6);
     return r;
   }
@@ -832,8 +841,14 @@
     if (r.error) { s.append(p(r.error, "notice notice--error")); return; }
     s.append(cifra("El contrato dura, como mínimo, hasta el ", fechaLarga(r.finMinimo)));
     if (r.prorrogaObligatoria) s.append(p("Se pactó por menos de " + r.minimo + " años: al vencer el " + fechaLarga(r.finPactado) + " se prorroga año a año, obligatoriamente para el casero, hasta cumplir " + r.minimo + " años. El inquilino puede irse al final de cada año avisando con 30 días de antelación (art. 9.1)."));
-    s.append(p("Para no renovar después, el casero tiene que avisar como tarde el " + fechaLarga(r.avisoCasero) + " (4 meses antes) y el inquilino como tarde el " + fechaLarga(r.avisoInquilino) + " (2 meses antes) (art. 10.1)."));
-    s.append(p("Si nadie avisa, se prorroga año a año hasta el " + fechaLarga(r.finTacita) + " como máximo. En esos años el inquilino puede irse avisando con un mes de antelación al final de cada anualidad (art. 10.1)."));
+    s.append(p("Para no renovar después, el casero tiene que avisar como tarde el " + fechaLarga(r.avisoCasero) + " (" + r.mesesAvisoCasero + " meses antes) y el inquilino como tarde el " + fechaLarga(r.avisoInquilino) + " (2 meses antes) (art. 10.1" + (r.nuevoArt10 && r.mesesAvisoCasero === 4 ? " y disposición transitoria única del Real Decreto-ley 28/2026" : "") + ")."));
+    if (r.nuevoArt10) {
+      s.append(p("Si nadie avisa, el contrato se prorroga " + r.minimo + " años más, hasta el " + fechaLarga(r.finTacita) + ", y así sucesivamente (art. 10.1, redactado por el Real Decreto-ley 28/2026, en vigor desde el 15 de noviembre de 2026)."));
+      s.append(p("Si el casero avisa de que no renueva sin una causa del art. 10.2 (por ejemplo, necesitar la vivienda para él o su familia hasta el segundo grado, o que el inquilino tenga otra vivienda en el municipio), tiene que indemnizar al inquilino al entregar la vivienda: lo mayor entre 12 mensualidades según el valor superior del índice de precios de referencia de la vivienda y una mensualidad por cada año vivido en ella; si la vivienda no tiene valor en el índice, se usa la renta vigente (art. 10.1)."));
+    } else {
+      s.append(p("Si nadie avisa, se prorroga año a año hasta el " + fechaLarga(r.finTacita) + " como máximo. En esos años el inquilino puede irse avisando con un mes de antelación al final de cada anualidad (art. 10.1 en su redacción anterior al 15 de noviembre de 2026, que sigue rigiendo esta prórroga por la disposición transitoria única del Real Decreto-ley 28/2026). Al terminar, se aplicará el nuevo artículo 10."));
+    }
+    if (r.finMinimo <= "2028-12-31") s.append(p("Como el contrato termina antes del 31 de diciembre de 2028, si estás al corriente de pago puedes pedir una prórroga extraordinaria de hasta 2 años (Real Decreto-ley 29/2026): mira cómo en la página de la prórroga del alquiler.", "fine-print"));
     s.append(p("Desde el " + fechaLarga(r.desistimiento) + " el inquilino puede dejar la vivienda avisando con 30 días de antelación; si el contrato lo prevé, pagaría una mensualidad por cada año que falte, o la parte proporcional (art. 11).", "fine-print"));
   });
 })(typeof window !== "undefined" ? window : {});

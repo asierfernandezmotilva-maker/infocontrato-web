@@ -97,7 +97,27 @@
     return { dias: dias, generados: generados, pendientes: Math.round((generados - disfrutados) * 100) / 100 };
   }
 
-  var API = { periodoPrueba: periodoPrueba, smi: smi, duracionAlquiler: duracionAlquiler, sumarFecha: sumarFecha, cartaDimision: cartaDimision, vacaciones: vacaciones };
+  // ---- Indemnización al inquilino si el casero no renueva (art. 10.1 LAU, redactado por el RDL 28/2026, desde el 15/11/2026):
+  // la mayor entre 12 mensualidades y una por año residido (prorrateo por meses y, dentro del mes, por días), con el valor
+  // superior del índice de precios de referencia o, si no lo hay, la renta vigente ----
+  // e = { entrada: "AAAA-MM-DD" (desde cuándo vive), salida: "AAAA-MM-DD" (vencimiento), renta, indice (opcional) }
+  function diasEntre(a, b) { var x = a.split("-"), y = b.split("-"); return Math.round((Date.UTC(y[0], y[1] - 1, y[2]) - Date.UTC(x[0], x[1] - 1, x[2])) / 86400000); }
+  function indemnizacionAlquiler(e) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(e.entrada || "") || !/^\d{4}-\d{2}-\d{2}$/.test(e.salida || "")) return { error: "Escribe las dos fechas." };
+    if (e.salida <= e.entrada) return { error: "La fecha en que termina el contrato tiene que ser posterior a la de entrada." };
+    if (e.salida < ART10_2026) return { error: "La indemnización solo existe para los contratos que terminan desde el 15 de noviembre de 2026 (Real Decreto-ley 28/2026)." };
+    if (!(e.renta > 0)) return { error: "Escribe la renta mensual actual." };
+    var base = e.indice > 0 ? e.indice : e.renta;
+    var meses = 0;
+    while (sumarFecha(e.entrada, meses + 1) <= e.salida) meses++;
+    var ancla = sumarFecha(e.entrada, meses);
+    var anios = (meses + diasEntre(ancla, e.salida) / diasEntre(ancla, sumarFecha(ancla, 1))) / 12;
+    var r = { base: base, porIndice: e.indice > 0, anios: redondea(anios), doce: redondea(12 * base), porAnios: redondea(base * anios) };
+    r.total = Math.max(r.doce, r.porAnios);
+    return r;
+  }
+
+  var API = { periodoPrueba: periodoPrueba, smi: smi, duracionAlquiler: duracionAlquiler, indemnizacionAlquiler: indemnizacionAlquiler, sumarFecha: sumarFecha, cartaDimision: cartaDimision, vacaciones: vacaciones };
   if (typeof module !== "undefined" && module.exports) { module.exports = API; return; }
 
   // ---- Páginas ----
@@ -171,6 +191,15 @@
     });
     root.addEventListener("afterprint", function () { document.body.classList.remove("imprimir-hoja"); });
   }
+
+  enviar("calc-indemnizacion", function (f, s) {
+    var r = indemnizacionAlquiler({ entrada: f.entrada.value, salida: f.salida.value, renta: num(f.renta.value), indice: num(f.indice.value) });
+    if (r.error) { s.append(p(r.error, "notice notice--error")); return; }
+    s.append(cifra("Indemnización: ", euros(r.total)));
+    s.append(p("Es la mayor de estas dos cantidades: 12 mensualidades (" + euros(r.doce) + ") o una mensualidad por cada año vivido en la vivienda (" + r.anios.toLocaleString("es-ES") + " años: " + euros(r.porAnios) + "), calculadas con " +
+      (r.porIndice ? "el valor superior del índice de precios de referencia (" + euros(r.base) + " al mes)" : "la renta actual (" + euros(r.base) + " al mes), porque no has indicado el valor del índice de precios de referencia") + " (art. 10.1 LAU)."));
+    s.append(p("Se cobra al entregar la vivienda. No hay indemnización si el casero hace constar en el aviso una de las causas del art. 10.2 (abajo), si el aviso de no renovar es anterior al 7 de octubre de 2026 o si podías pedir una prórroga legal obligatoria para el casero y no la pediste.", "fine-print"));
+  });
 
   enviar("calc-duracion", function (f, s) {
     var r = duracionAlquiler({ inicio: f.inicio.value, anios: num(f.anios.value), juridica: f.casero.value === "juridica" });

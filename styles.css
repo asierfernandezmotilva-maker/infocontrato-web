@@ -652,3 +652,17 @@ legend { font-size: 1.25rem; font-weight: 750; margin-bottom: .875rem; padding: 
 .ad-slot { margin: 2rem 0; min-height: 280px; }
 .ad-slot[hidden] { display: none; }
 .ad-etiqueta { font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: .25rem; }
+
+/* Comunidad de propietarios (/mayorias-junta-propietarios/): las dos mayorías, propietarios y cuotas, con el umbral y
+   el tramo que aportarían los ausentes; hoja de texto imprimible (convocatoria) y tabla de la derrama */
+.dm { display: grid; gap: 1rem; margin: 1rem 0; max-width: 36rem; }
+.dm-cab { margin: 0 0 .35rem; font-size: .9375rem; }
+.dm-barra { position: relative; height: 1.1rem; border-radius: 999px; background: var(--accent-soft); overflow: hidden; }
+.dm-favor { position: absolute; top: 0; bottom: 0; left: 0; background: var(--accent); }
+.dm-ausentes { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(135deg, var(--accent) 0 4px, transparent 4px 9px); opacity: .5; }
+.dm-umbral { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: var(--text); }
+.hoja-texto { margin: 0; font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tabla-scroll td.num { text-align: right; white-space: nowrap; }
+@media print { body.imprimir-hoja .hoja-texto { font: 11pt/1.4 "Helvetica Neue", Helvetica, Arial, sans-serif; } }
+
+#bloque-notificacion, #bloque-carta { margin-top: 1.25rem; }

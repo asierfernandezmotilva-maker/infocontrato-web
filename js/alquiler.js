@@ -99,7 +99,7 @@
     bloqueCarta.hidden = r.estado !== "ok";
     if (r.estado === "error") salida.append(p(r.mensaje, "notice notice--error"));
     else if (r.estado === "sin-clausula") salida.append(p("Si el contrato no dice nada sobre la actualización, la renta no se actualiza (art. 18.1 LAU). Sigues pagando " + euros(e.renta) + " al mes."));
-    else if (r.estado === "generica") salida.append(p("Hasta el 7 de octubre de 2026, si el contrato preveía actualizar la renta pero no decía con qué índice, se aplicaba la variación anual del Índice de Garantía de Competitividad, que publica el INE (art. 18.1 LAU). Esta calculadora no lo incluye. Desde el 8 de octubre de 2026 se aplica el IRAV: pon esa fecha de actualización o posterior."));
+    else if (r.estado === "generica") salida.append(p("Hasta el 8 de octubre de 2026, si el contrato preveía actualizar la renta pero no decía con qué índice, se aplicaba la variación anual del Índice de Garantía de Competitividad, que publica el INE (art. 18.1 LAU). Esta calculadora no lo incluye. Desde el 8 de octubre de 2026 se aplica el IRAV: pon esa fecha de actualización o posterior."));
     else if (r.estado === "sin-dato") salida.append(p("El INE todavía no ha publicado el índice de " + nombreMes(r.mes) + ". Se publica hacia el día 15 del mes siguiente: vuelve entonces.", "notice notice--warn"));
     else {
       var cifra = document.createElement("p"), b = document.createElement("strong");

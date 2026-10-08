@@ -198,7 +198,7 @@
     s.append(cifra("Indemnización: ", euros(r.total)));
     s.append(p("Es la mayor de estas dos cantidades: 12 mensualidades (" + euros(r.doce) + ") o una mensualidad por cada año vivido en la vivienda (" + r.anios.toLocaleString("es-ES") + " años: " + euros(r.porAnios) + "), calculadas con " +
       (r.porIndice ? "el valor superior del índice de precios de referencia (" + euros(r.base) + " al mes)" : "la renta actual (" + euros(r.base) + " al mes), porque no has indicado el valor del índice de precios de referencia") + " (art. 10.1 LAU)."));
-    s.append(p("Se cobra al entregar la vivienda. No hay indemnización si el casero hace constar en el aviso una de las causas del art. 10.2 (abajo), si el aviso de no renovar es anterior al 7 de octubre de 2026 o si podías pedir una prórroga legal obligatoria para el casero y no la pediste.", "fine-print"));
+    s.append(p("Se cobra al entregar la vivienda. No hay indemnización si el casero hace constar en el aviso una de las causas del art. 10.2 (abajo), si el aviso de no renovar es anterior al 8 de octubre de 2026 o si podías pedir una prórroga legal obligatoria para el casero y no la pediste.", "fine-print"));
   });
 
   enviar("calc-duracion", function (f, s) {

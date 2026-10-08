@@ -668,7 +668,7 @@
   var EJEMPLO = {
     modoHogar: false, empresaNombre: "Bar La Esquina, S.L. (ejemplo)", empresaNif: "B00000000",
     empresaDomicilio: "C/ Mayor 12, 28013 Madrid", centroIgualDomicilio: true, provincia: "Madrid", numTrabajadores: 4,
-    trabajadorNombre: "Lucía Martín Pérez (ejemplo)", fechaInicio: "2026-10-07", tipoContrato: "indefinido",
+    trabajadorNombre: "Lucía Martín Pérez (ejemplo)", fechaInicio: "2026-10-08", tipoContrato: "indefinido",
     puesto: "Camarera de barra", categoria: "Grupo II, camarero/a", pruebaCantidad: 2, pruebaUnidad: "meses",
     funciones: "Atención a clientes en barra y sala, preparación de bebidas y cafés, cobro y limpieza de la zona de trabajo.",
     salarioBase: 1400, salarioPeriodo: "mes", complementos: [{ nombre: "Plus de transporte", importe: 60 }], pagasExtra: 2,

@@ -117,13 +117,83 @@
     return r;
   }
 
-  var API = { periodoPrueba: periodoPrueba, smi: smi, duracionAlquiler: duracionAlquiler, indemnizacionAlquiler: indemnizacionAlquiler, sumarFecha: sumarFecha, cartaDimision: cartaDimision, vacaciones: vacaciones };
+  // ---- Finiquito e indemnización: arts. 31, 38.1, 49.1.c, 53.1, 53.4, 55.7, 56.1 y DT 11.ª del Estatuto de los Trabajadores ----
+  // e = { inicio, fin: "AAAA-MM-DD" (fin = último día), anual: salario bruto anual con pagas extra,
+  //       pagas: "prorrateadas" | "semestral" | "anual" (cómo se generan las dos pagas extra; lo fija el convenio, art. 31),
+  //       causa (ver CAUSAS), vacAnuales, vacDisfrutadas (este año), diasMes (días del último mes sin cobrar), preaviso (días dados) }
+  // Salario diario: mensual / 30 para días, vacaciones y pagas; anual / 365 para indemnización y preaviso.
+  // Antigüedad en despidos: por meses, contando la fracción de mes como mes completo (criterio habitual de los tribunales).
+  var CAUSAS = {
+    "fin-temporal": "art. 49.1.c", "fin-formativo": "art. 49.1.c", "objetivo": "arts. 53.1.b y 53.4",
+    "improcedente": "art. 56.1 y disposición transitoria undécima", "dimision": "art. 49.1.d", "disciplinario": "art. 55.7", "prueba": "art. 14.2"
+  };
+  function siguiente(f) { var p = f.split("-").map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2] + 1)).toISOString().slice(0, 10); }
+  function mesesServicio(desde, hasta) {   // meses de desde a hasta (incluido), con la fracción como mes completo
+    var fin = siguiente(hasta), m = 0;
+    while (sumarFecha(desde, m + 1) <= fin) m++;
+    return sumarFecha(desde, m) < fin ? m + 1 : m;
+  }
+  function finiquito(e) {
+    var ok = /^\d{4}-\d{2}-\d{2}$/;
+    if (!ok.test(e.inicio || "") || !ok.test(e.fin || "")) return { error: "Escribe la fecha de inicio y el último día de trabajo." };
+    if (e.fin < e.inicio) return { error: "El último día tiene que ser posterior al inicio." };
+    if (!(e.anual > 0) || e.anual > 1e7) return { error: "Escribe tu salario bruto anual, con las pagas extra." };
+    if (!CAUSAS[e.causa]) return { error: "Elige cómo termina el contrato." };
+    var vacAnuales = e.vacAnuales > 0 ? e.vacAnuales : 30;
+    if (vacAnuales < 30 || vacAnuales > 60) return { error: "Los días de vacaciones al año no pueden ser menos de 30 naturales (art. 38.1)." };
+    var anioFin = e.fin.slice(0, 4), finEx = siguiente(e.fin), max = function (a, b) { return a > b ? a : b; };
+    var mensual = e.anual / (e.pagas === "prorrateadas" ? 12 : 14), diarioMes = mensual / 30, diario = e.anual / 365;
+    var r = { causa: e.causa, base: CAUSAS[e.causa], mensual: redondea(mensual) };
+
+    r.diasMes = Math.min(30, e.diasMes >= 0 ? e.diasMes : +e.fin.slice(8));
+    r.salarioMes = redondea(diarioMes * r.diasMes);
+
+    var desdeVac = max(e.inicio, anioFin + "-01-01");
+    r.vacGeneradas = redondea(Math.min(vacAnuales, vacAnuales * diasEntre(desdeVac, finEx) / 365));
+    r.vacPendientes = redondea(Math.max(0, r.vacGeneradas - (e.vacDisfrutadas > 0 ? e.vacDisfrutadas : 0)));
+    r.vacImporte = redondea(r.vacPendientes * diarioMes);
+
+    var paga = e.anual / 14, devengo = function (inicioPeriodo) {   // parte de una paga generada desde inicioPeriodo hasta el fin
+      return paga * diasEntre(max(e.inicio, inicioPeriodo), finEx) / diasEntre(inicioPeriodo, sumarFecha(inicioPeriodo, e.pagas === "semestral" ? 6 : 12));
+    };
+    if (e.pagas === "semestral") r.pagasImporte = redondea(devengo(anioFin + (+e.fin.slice(5, 7) <= 6 ? "-01-01" : "-07-01")));
+    else if (e.pagas === "anual") r.pagasImporte = redondea(devengo(anioFin + "-01-01") + devengo(e.fin >= anioFin + "-07-01" ? anioFin + "-07-01" : (anioFin - 1) + "-07-01"));
+    else r.pagasImporte = 0;
+
+    r.preavisoFalta = e.causa === "objetivo" ? Math.max(0, 15 - (e.preaviso > 0 ? e.preaviso : 0)) : 0;
+    r.preavisoImporte = redondea(r.preavisoFalta * diario);
+
+    var dias = 0;
+    if (e.causa === "fin-temporal") dias = 12 * diasEntre(e.inicio, finEx) / 365;
+    else if (e.causa === "objetivo") dias = Math.min(20 * mesesServicio(e.inicio, e.fin) / 12, 365);
+    else if (e.causa === "improcedente") {
+      if (e.inicio < "2012-02-12") {
+        var d1 = 45 * mesesServicio(e.inicio, e.fin < "2012-02-11" ? e.fin : "2012-02-11") / 12;
+        var d2 = e.fin >= "2012-02-12" ? 33 * mesesServicio("2012-02-12", e.fin) / 12 : 0;
+        dias = Math.min(d1 + d2, d1 > 720 ? Math.min(d1, 42 * 365 / 12) : 720);
+        r.anterior2012 = true;
+      } else dias = Math.min(33 * mesesServicio(e.inicio, e.fin) / 12, 24 * 365 / 12);
+    }
+    r.diasIndemnizacion = redondea(dias);
+    r.indemnizacion = redondea(dias * diario);
+    r.preavisoTemporal = e.causa === "fin-temporal" && diasEntre(e.inicio, finEx) > 365;
+    r.total = redondea(r.salarioMes + r.vacImporte + r.pagasImporte + r.preavisoImporte + r.indemnizacion);
+    return r;
+  }
+
+  // «1.250,50», «750,5» y «28.000» al estilo español; «750.50» (sin coma ni grupos de 3) se lee con punto decimal
+  function num(v) {
+    v = String(v == null ? "" : v).trim();
+    if (v.indexOf(",") < 0 && /^\d{1,3}(\.\d{3})+$/.test(v)) v = v.replace(/\./g, "");   // «28.000»: punto de miles
+    return parseFloat(v.indexOf(",") >= 0 ? v.replace(/\./g, "").replace(",", ".") : v);
+  }
+
+  var API = { num: num, periodoPrueba: periodoPrueba, smi: smi, duracionAlquiler: duracionAlquiler, indemnizacionAlquiler: indemnizacionAlquiler, sumarFecha: sumarFecha, cartaDimision: cartaDimision, vacaciones: vacaciones, finiquito: finiquito, mesesServicio: mesesServicio };
   if (typeof module !== "undefined" && module.exports) { module.exports = API; return; }
 
   // ---- Páginas ----
   function p(texto, clase) { var n = document.createElement("p"); n.textContent = texto; if (clase) n.className = clase; return n; }
   function cifra(etiqueta, valor) { var n = document.createElement("p"), b = document.createElement("strong"); n.className = "alquiler-cifra"; b.textContent = valor; n.append(etiqueta, b); return n; }
-  function num(v) { v = String(v).trim(); return parseFloat(v.indexOf(",") >= 0 ? v.replace(/\./g, "").replace(",", ".") : v); }
   function enviar(id, pintar) {
     var form = document.getElementById(id), salida = document.getElementById(id + "-resultado");
     if (!form || !salida) return;
@@ -199,6 +269,29 @@
     s.append(p("Es la mayor de estas dos cantidades: 12 mensualidades (" + euros(r.doce) + ") o una mensualidad por cada año vivido en la vivienda (" + r.anios.toLocaleString("es-ES") + " años: " + euros(r.porAnios) + "), calculadas con " +
       (r.porIndice ? "el valor superior del índice de precios de referencia (" + euros(r.base) + " al mes)" : "la renta actual (" + euros(r.base) + " al mes), porque no has indicado el valor del índice de precios de referencia") + " (art. 10.1 LAU)."));
     s.append(p("Se cobra al entregar la vivienda. No hay indemnización si el casero hace constar en el aviso una de las causas del art. 10.2 (abajo), si el aviso de no renovar es anterior al 7 de octubre de 2026 o si podías pedir una prórroga legal obligatoria para el casero y no la pediste.", "fine-print"));
+  });
+
+  enviar("calc-finiquito", function (f, s) {
+    var r = finiquito({ inicio: f.inicio.value, fin: f.fin.value, anual: num(f.anual.value), pagas: f.pagas.value, causa: f.causa.value,
+      vacAnuales: num(f.vacanuales.value), vacDisfrutadas: num(f.vacdisfrutadas.value) || 0,
+      diasMes: f.diasmes.value.trim() === "" ? undefined : num(f.diasmes.value), preaviso: num(f.preaviso.value) || 0 });
+    if (r.error) { s.append(p(r.error, "notice notice--error")); return; }
+    var n = function (x) { return x.toLocaleString("es-ES", { maximumFractionDigits: 2 }); };
+    s.append(cifra("Total bruto: ", euros(r.total)));
+    var ul = document.createElement("ul");
+    var linea = function (t) { var li = document.createElement("li"); li.textContent = t; ul.append(li); };
+    linea("Salario de " + r.diasMes + " días del último mes: " + euros(r.salarioMes));
+    linea("Vacaciones no disfrutadas (" + n(r.vacPendientes) + " de " + n(r.vacGeneradas) + " días generados este año): " + euros(r.vacImporte));
+    if (f.pagas.value !== "prorrateadas") linea("Parte generada de las pagas extra: " + euros(r.pagasImporte));
+    if (r.preavisoFalta > 0) linea("Preaviso no dado (" + r.preavisoFalta + " días, art. 53.4): " + euros(r.preavisoImporte));
+    linea("Indemnización (" + n(r.diasIndemnizacion) + " días de salario, " + r.base + " del Estatuto de los Trabajadores): " + euros(r.indemnizacion));
+    s.append(ul);
+    if (r.anterior2012) s.append(p("Como empezaste antes del 12 de febrero de 2012, el tiempo anterior se paga a 45 días por año y el posterior a 33, con el tope de la disposición transitoria undécima."));
+    if (r.causa === "improcedente") s.append(p("Si el despido se declara improcedente, la empresa elige entre readmitirte o pagarte esta indemnización (art. 56.1). Para reclamar tienes 20 días hábiles desde el despido (art. 59.3).", "fine-print"));
+    if (r.causa === "objetivo") s.append(p("Si no estás de acuerdo con el despido, tienes 20 días hábiles para reclamar (art. 59.3); en el preaviso tienes 6 horas semanales de permiso retribuido para buscar empleo (art. 53.2).", "fine-print"));
+    if (r.preavisoTemporal) s.append(p("Como el contrato duró más de un año, quien lo da por terminado tenía que avisar con 15 días de antelación (art. 49.1.c).", "fine-print"));
+    if (r.causa === "dimision") s.append(p("En la baja voluntaria no hay indemnización, y tienes que dar el preaviso que marque tu convenio o la costumbre del lugar (art. 49.1.d).", "fine-print"));
+    s.append(p("Son importes brutos y orientativos. Al salario, las vacaciones y las pagas se les aplican la retención de IRPF y la cotización; la indemnización está exenta de IRPF hasta la cuantía obligatoria del Estatuto (art. 7.e de la Ley del IRPF). Si tu convenio mejora algo, manda el convenio.", "fine-print"));
   });
 
   enviar("calc-duracion", function (f, s) {

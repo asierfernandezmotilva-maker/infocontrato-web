@@ -814,7 +814,11 @@
 
   function p(texto, clase) { var n = document.createElement("p"); n.textContent = texto; if (clase) n.className = clase; return n; }
   // «1.250,50» y «750,5» al estilo español; «750.50» sin coma se lee con punto decimal
-  function num(v) { v = String(v).trim(); return parseFloat(v.indexOf(",") >= 0 ? v.replace(/\./g, "").replace(",", ".") : v); }
+  function num(v) {
+    v = String(v).trim();
+    if (v.indexOf(",") < 0 && /^\d{1,3}(\.\d{3})+$/.test(v)) v = v.replace(/\./g, "");   // «28.000»: punto de miles
+    return parseFloat(v.indexOf(",") >= 0 ? v.replace(/\./g, "").replace(",", ".") : v);
+  }
 
   form.addEventListener("submit", function (ev) {
     ev.preventDefault();

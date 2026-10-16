@@ -854,7 +854,11 @@
   // ---- Páginas ----
   function p(texto, clase) { var n = document.createElement("p"); n.textContent = texto; if (clase) n.className = clase; return n; }
   function cifra(etiqueta, valor) { var n = document.createElement("p"), b = document.createElement("strong"); n.className = "alquiler-cifra"; b.textContent = valor; n.append(etiqueta, b); return n; }
-  function num(v) { v = String(v == null ? "" : v).trim(); return parseFloat(v.indexOf(",") >= 0 ? v.replace(/\./g, "").replace(",", ".") : v); }
+  function num(v) {
+    v = String(v == null ? "" : v).trim();
+    if (v.indexOf(",") < 0 && /^\d{1,3}(\.\d{3})+$/.test(v)) v = v.replace(/\./g, "");   // «28.000»: punto de miles
+    return parseFloat(v.indexOf(",") >= 0 ? v.replace(/\./g, "").replace(",", ".") : v);
+  }
   function enviar(id, pintar) {
     var form = document.getElementById(id), salida = document.getElementById(id + "-resultado");
     if (!form || !salida) return;

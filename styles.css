@@ -274,7 +274,9 @@ legend { font-size: 1.25rem; font-weight: 750; margin-bottom: .875rem; padding: 
 /* Cantidad y unidad en la misma fila; los campos se alinean por abajo aunque la etiqueta ocupe dos líneas */
 .field-pair { margin-bottom: 1.25rem; }
 .field-row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 0 .75rem; align-items: end; }
-.field-row > .field { margin-bottom: 0; }
+.field-row > .field { margin-bottom: 0; min-width: 0; overflow-x: clip; overflow-clip-margin: 6px; }
+/* Chrome no encoge un <input type="date"> por debajo de ~170 px: en móvil se salía 18 px de la pantalla */
+.field-row input, .field-row select { min-width: 0; max-width: 100%; }
 .field-row-mensajes { display: grid; gap: .375rem; margin-top: .375rem; }
 .input-sufijo { position: relative; }
 .input-sufijo input { padding-right: 3.75rem; }

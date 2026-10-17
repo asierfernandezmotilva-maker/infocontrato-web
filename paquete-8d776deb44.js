@@ -15,6 +15,168 @@
   };
 })();
 ;
+/* lib/legal-data.js */
+/* Datos legales que cambian con el tiempo. TODO lo que haya que actualizar (salario mínimo, enlaces,
+   fechas) vive solo aquí. Cada cifra lleva su fuente. REVISAR CADA ENERO (nuevo salario mínimo).
+   Se usa en el navegador (window.__LEGAL__) y en las pruebas de Node (require). */
+(function (root) {
+  "use strict";
+
+  var LEGAL = {
+    revisado: "2026-09-25", // fecha en la que se comprobaron estas cifras y enlaces
+
+    // Real Decreto 723/2026, de 9 de septiembre (transpone la Directiva (UE) 2019/1152).
+    norma: {
+      nombre: "Real Decreto 723/2026, de 9 de septiembre",
+      boeId: "BOE-A-2026-19200",
+      fechaBoe: "2026-09-15",
+      vigor: "2026-10-05",        // disposición final cuarta: veinte días tras su publicación
+      sustituye: "Real Decreto 1659/1998",
+      url: "https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-19200"
+    },
+
+    // Art. 2.2 RD 723/2026: el capítulo II solo se aplica a relaciones de MÁS de cuatro semanas.
+    exclusionDias: 28,
+
+    // Disposición transitoria única RD 723/2026: la plantilla existente puede pedirlo; la empresa responde
+    // en 30 días HÁBILES desde que recibe la solicitud (y solo si no se lo había dado ya).
+    plazoRespuestaDias: 30,
+    plazoRespuestaTipo: "hábiles",
+
+    // Salario mínimo interprofesional 2026 — Real Decreto 126/2026, de 18 de febrero (BOE 19/02/2026).
+    // REVISAR CADA ENERO.
+    smi: {
+      anio: 2026,
+      norma: "Real Decreto 126/2026",
+      url: "https://www.boe.es/buscar/act.php?id=BOE-A-2026-3815",
+      mensual14: 1221,      // euros/mes en 14 pagas, jornada completa
+      mensual12: 1424.5,    // euros/mes con pagas extra prorrateadas (12 pagas)
+      anual: 17094,         // euros/año
+      diario: 40.7,         // euros/día
+      hogarHora: 9.55,      // euros/hora efectiva, empleo de hogar por horas (incluye partes proporcionales)
+      jornadaSemanal: 40    // horas/semana de la jornada completa de referencia
+    },
+
+    // Duración máxima del periodo de prueba sin convenio que diga otra cosa — art. 14.1 Estatuto de los Trabajadores.
+    prueba: {
+      fuente: "Art. 14.1 del Estatuto de los Trabajadores",
+      tecnicosMeses: 6,         // técnicos titulados
+      restoMeses: 2,            // resto de trabajadores
+      restoPymeMeses: 3,        // resto, en empresas de menos de 25 trabajadores
+      umbralPymeTrabajadores: 25,
+      hogarMeses: 2             // empleo de hogar (art. 6.2 del Real Decreto 1620/2011)
+    },
+
+    // Alquiler de vivienda (/actualizar-alquiler/). Los índices del INE están en lib/indices-alquiler.js
+    // (tools/actualizar-indices.py, cada mes). topeExtra: límite extraordinario a la actualización anual que fija un
+    // real decreto-ley; null = no hay ninguno en vigor. El RDL 26/2026 (2 %) lo derogó el Congreso el 02/10/2026
+    // (BOE-A-2026-20526); el RDL 29/2026 (BOE 07/10/2026, BOE-A-2026-20823, en vigor el 08/10/2026) lo repone en su
+    // disposición final sexta: actualizaciones entre el 08/10/2026 y el 31/12/2027, máximo 2 % si no hay nuevo pacto
+    // (y 0 % si la renta supera el límite del índice de precios de referencia). Si el Congreso no lo convalida, poner null.
+    alquiler: {
+      topeExtra: { desde: "2026-10-08", hasta: "2027-12-31", maximo: 2, norma: "disposición final sexta del Real Decreto-ley 29/2026" }
+    },
+
+    enlaces: {
+      boe723: "https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-19200",
+      boe126: "https://www.boe.es/buscar/act.php?id=BOE-A-2026-3815",
+      // Consulta pública de convenios de ámbito estatal (REGCON). La antigua dirección en mitramiss.gob.es ya no responde.
+      regcon: "https://expinterweb.mites.gob.es/regcon/pub/consultaPublicaEstatal",
+      // Lista oficial de todos los boletines autonómicos y provinciales (los convenios provinciales se publican en el BOP).
+      boletines: "https://www.boe.es/legislacion/otros_diarios_oficiales.php",
+      sepe: "https://www.sepe.es/HomeSepe",
+      // Modelo oficial del SEPE (disposición adicional primera), publicado a primeros de octubre de 2026 (el PDF es
+      // del 01/10/2026). Los textos de portada, guía y /modelo-sepe/ ya están escritos en el HTML; ver tools/MODELO-SEPE.md.
+      modeloSepe: "https://www.sepe.es/HomeSepe/empresas/Contratos-de-trabajo/modelos-contrato.html",
+      modeloSepeFecha: ""
+    },
+
+    // Comunidades autónomas y ciudades autónomas (códigos ISO 3166-2:ES).
+    // tipo "registro": buscador o registro de convenios propio de la comunidad.
+    // tipo "boletin": URL genérica (boletín oficial autonómico) porque no se encontró buscador propio.
+    ccaa: {
+      AN: { nombre: "Andalucía", tipo: "registro", fuente: "Registro de convenios colectivos de la Junta de Andalucía", url: "https://www.juntadeandalucia.es/organismos/empleoempresaytrabajoautonomo/areas/relaciones-laborales/registro-convenios-colectivos-planes-igualdad.html" },
+      AR: { nombre: "Aragón", tipo: "boletin", fuente: "Boletín Oficial de Aragón (BOA)", url: "https://www.boa.aragon.es/" },
+      AS: { nombre: "Principado de Asturias", tipo: "boletin", fuente: "Boletín Oficial del Principado de Asturias (BOPA)", url: "https://miprincipado.asturias.es/bopa" },
+      IB: { nombre: "Illes Balears", tipo: "boletin", fuente: "Butlletí Oficial de les Illes Balears (BOIB)", url: "https://www.caib.es/eboibfront/" },
+      CN: { nombre: "Canarias", tipo: "boletin", fuente: "Boletín Oficial de Canarias (BOC)", url: "https://www.gobiernodecanarias.org/boc/" },
+      CB: { nombre: "Cantabria", tipo: "boletin", fuente: "Boletín Oficial de Cantabria (BOC)", url: "https://boc.cantabria.es/boces/" },
+      CL: { nombre: "Castilla y León", tipo: "boletin", fuente: "Boletín Oficial de Castilla y León (BOCYL)", url: "https://bocyl.jcyl.es/" },
+      CM: { nombre: "Castilla-La Mancha", tipo: "boletin", fuente: "Diario Oficial de Castilla-La Mancha (DOCM)", url: "https://docm.jccm.es/docm/" },
+      CT: { nombre: "Cataluña", tipo: "registro", fuente: "Cercador de convenis de la Generalitat de Catalunya", url: "https://treball.gencat.cat/ca/consell_relacions_laborals/convenis_colectius/cercador_de_convenis/" },
+      VC: { nombre: "Comunitat Valenciana", tipo: "registro", fuente: "Buscador de convenios colectivos de la Generalitat Valenciana", url: "https://habitatge.gva.es/es/web/dg-trabajo/convenios-buscador" },
+      EX: { nombre: "Extremadura", tipo: "boletin", fuente: "Diario Oficial de Extremadura (DOE)", url: "https://doe.juntaex.es/" },
+      GA: { nombre: "Galicia", tipo: "boletin", fuente: "Diario Oficial de Galicia (DOG)", url: "https://www.xunta.gal/diario-oficial-galicia" },
+      MD: { nombre: "Comunidad de Madrid", tipo: "registro", fuente: "Convenios colectivos de la Comunidad de Madrid", url: "https://www.comunidad.madrid/empleo/convenios-colectivos" },
+      MC: { nombre: "Región de Murcia", tipo: "registro", fuente: "Convenios colectivos de la Región de Murcia", url: "https://www.carm.es/web/pagina?IDCONTENIDO=14590&IDTIPO=100&RASTRO=c897$m34326" },
+      NC: { nombre: "Comunidad Foral de Navarra", tipo: "boletin", fuente: "Boletín Oficial de Navarra (BON)", url: "https://bon.navarra.es/es/inicio" },
+      PV: { nombre: "País Vasco", tipo: "registro", fuente: "Registro de convenios colectivos del País Vasco", url: "https://www.euskadi.eus/registro/regcon/web01-tramite/es/" },
+      RI: { nombre: "La Rioja", tipo: "boletin", fuente: "Boletín Oficial de La Rioja (BOR)", url: "https://web.larioja.org/bor-portada" },
+      CE: { nombre: "Ceuta", tipo: "boletin", fuente: "Boletín Oficial de la Ciudad de Ceuta (BOCCE)", url: "https://www.ceuta.es/ceuta/bocce" },
+      ML: { nombre: "Melilla", tipo: "boletin", fuente: "Boletín Oficial de Melilla (BOME)", url: "https://bomemelilla.es/" }
+    },
+
+    // 50 provincias + 2 ciudades autónomas, en orden alfabético, con su comunidad.
+    provincias: [
+      { nombre: "A Coruña", ccaa: "GA" },
+      { nombre: "Álava / Araba", ccaa: "PV" },
+      { nombre: "Albacete", ccaa: "CM" },
+      { nombre: "Alicante / Alacant", ccaa: "VC" },
+      { nombre: "Almería", ccaa: "AN" },
+      { nombre: "Asturias", ccaa: "AS" },
+      { nombre: "Ávila", ccaa: "CL" },
+      { nombre: "Badajoz", ccaa: "EX" },
+      { nombre: "Barcelona", ccaa: "CT" },
+      { nombre: "Bizkaia", ccaa: "PV" },
+      { nombre: "Burgos", ccaa: "CL" },
+      { nombre: "Cáceres", ccaa: "EX" },
+      { nombre: "Cádiz", ccaa: "AN" },
+      { nombre: "Cantabria", ccaa: "CB" },
+      { nombre: "Castellón / Castelló", ccaa: "VC" },
+      { nombre: "Ceuta", ccaa: "CE" },
+      { nombre: "Ciudad Real", ccaa: "CM" },
+      { nombre: "Córdoba", ccaa: "AN" },
+      { nombre: "Cuenca", ccaa: "CM" },
+      { nombre: "Gipuzkoa", ccaa: "PV" },
+      { nombre: "Girona", ccaa: "CT" },
+      { nombre: "Granada", ccaa: "AN" },
+      { nombre: "Guadalajara", ccaa: "CM" },
+      { nombre: "Huelva", ccaa: "AN" },
+      { nombre: "Huesca", ccaa: "AR" },
+      { nombre: "Illes Balears", ccaa: "IB" },
+      { nombre: "Jaén", ccaa: "AN" },
+      { nombre: "La Rioja", ccaa: "RI" },
+      { nombre: "Las Palmas", ccaa: "CN" },
+      { nombre: "León", ccaa: "CL" },
+      { nombre: "Lleida", ccaa: "CT" },
+      { nombre: "Lugo", ccaa: "GA" },
+      { nombre: "Madrid", ccaa: "MD" },
+      { nombre: "Málaga", ccaa: "AN" },
+      { nombre: "Melilla", ccaa: "ML" },
+      { nombre: "Murcia", ccaa: "MC" },
+      { nombre: "Navarra", ccaa: "NC" },
+      { nombre: "Ourense", ccaa: "GA" },
+      { nombre: "Palencia", ccaa: "CL" },
+      { nombre: "Pontevedra", ccaa: "GA" },
+      { nombre: "Salamanca", ccaa: "CL" },
+      { nombre: "Santa Cruz de Tenerife", ccaa: "CN" },
+      { nombre: "Segovia", ccaa: "CL" },
+      { nombre: "Sevilla", ccaa: "AN" },
+      { nombre: "Soria", ccaa: "CL" },
+      { nombre: "Tarragona", ccaa: "CT" },
+      { nombre: "Teruel", ccaa: "AR" },
+      { nombre: "Toledo", ccaa: "CM" },
+      { nombre: "Valencia / València", ccaa: "VC" },
+      { nombre: "Valladolid", ccaa: "CL" },
+      { nombre: "Zamora", ccaa: "CL" },
+      { nombre: "Zaragoza", ccaa: "AR" }
+    ]
+  };
+
+  root.__LEGAL__ = LEGAL;
+  if (typeof module !== "undefined" && module.exports) module.exports = LEGAL;
+})(typeof window !== "undefined" ? window : {});
+;
 /* js/consent.js */
 /* Banner de cookies propio, sin terceros. Guarda la decisión solo en este navegador
    (localStorage "ic:consent:v1" = { analitica: true|false, fecha }) y la vuelve a pedir a los 24 meses,
@@ -35,6 +197,8 @@
 
   var KEY = "ic:consent:v1";
   var CADUCA_MS = 730 * 24 * 3600 * 1000; // 24 meses
+  // Contenido del banner ({base} = carpeta raíz de la web). publicar.py lo copia tal cual en el HTML publicado: una sola línea.
+  var MARCADO = '<div class="container"><p id="consent-texto">Usamos Google Analytics para contar visitas, solo si lo aceptas. Lo que escribes en el formulario nunca sale de tu dispositivo. <a href="{base}cookies.html">Política de cookies</a></p><div class="consent-opciones" hidden><label class="check"><input type="checkbox" checked disabled> <span><strong>Técnicas</strong>: recuerdan esta elección y tu borrador en este navegador. Siempre activas.</span></label><label class="check"><input type="checkbox" id="consent-analitica"> <span><strong>Analíticas</strong>: Google Analytics, para saber cuántas personas usan la web.</span></label></div><div class="consent-acciones"><button type="button" class="btn btn--secondary" data-accion="aceptar">Aceptar</button><button type="button" class="btn btn--secondary" data-accion="rechazar">Rechazar</button><button type="button" class="btn btn--secondary" data-accion="configurar">Configurar</button></div></div>';
   var estado = null;                      // { analitica, fecha } o null si aún no ha decidido
   var oyentes = [];
   var barra = null, volverA = null;
@@ -66,26 +230,18 @@
 
   function mostrar(configurar) {
     if (!barra) {
-      var base = window.__IC__ ? window.__IC__.base : "";
-      barra = document.createElement("section");
-      barra.className = "consent";
-      barra.setAttribute("role", "dialog");
-      barra.setAttribute("aria-label", "Cookies");
-      barra.setAttribute("aria-describedby", "consent-texto");
-      barra.innerHTML =
-        '<div class="container">' +
-          '<p id="consent-texto">Usamos Google Analytics para contar visitas, solo si lo aceptas. ' +
-          'Lo que escribes en el formulario nunca sale de tu dispositivo. <a href="' + base + 'cookies.html">Política de cookies</a></p>' +
-          '<div class="consent-opciones" hidden>' +
-            '<label class="check"><input type="checkbox" checked disabled> <span><strong>Técnicas</strong>: recuerdan esta elección y tu borrador en este navegador. Siempre activas.</span></label>' +
-            '<label class="check"><input type="checkbox" id="consent-analitica"> <span><strong>Analíticas</strong>: Google Analytics, para saber cuántas personas usan la web.</span></label>' +
-          '</div>' +
-          '<div class="consent-acciones">' +
-            '<button type="button" class="btn btn--secondary" data-accion="aceptar">Aceptar</button>' +
-            '<button type="button" class="btn btn--secondary" data-accion="rechazar">Rechazar</button>' +
-            '<button type="button" class="btn btn--secondary" data-accion="configurar">Configurar</button>' +
-          '</div>' +
-        '</div>';
+      // En la copia publicada el banner ya viene en el HTML (publicar.py copia MARCADO) para salir en el primer
+      // pintado; si no está, se crea aquí.
+      barra = document.querySelector("section.consent");
+      if (!barra) {
+        barra = document.createElement("section");
+        barra.className = "consent";
+        barra.setAttribute("role", "dialog");
+        barra.setAttribute("aria-label", "Cookies");
+        barra.setAttribute("aria-describedby", "consent-texto");
+        barra.innerHTML = MARCADO.replace("{base}", window.__IC__ ? window.__IC__.base : "");
+        document.body.appendChild(barra);
+      }
       barra.addEventListener("click", function (ev) {
         var b = ev.target.closest("[data-accion]");
         if (!b) return;
@@ -95,7 +251,6 @@
         else if (accion === "guardar") decidir(barra.querySelector("#consent-analitica").checked);
         else modoConfigurar();
       });
-      document.body.appendChild(barra);
     }
     if (configurar) modoConfigurar();
   }
@@ -162,9 +317,11 @@
   }
 
   function init() {
-    var cliente = (window.__BRAND__ || {}).adsense;
+    var cliente = (window.__BRAND__ || {}).adsense, previo = document.querySelector("section.consent");
+    estado = cliente ? null : leer();
+    // El banner que trae el HTML sobra con el aviso de Google o si ya hay decisión (sin localStorage no lo quita el HTML)
+    if (previo && (cliente || estado)) previo.remove();
     if (cliente) return initGoogle(cliente);
-    estado = leer();
     Array.prototype.forEach.call(document.querySelectorAll("[data-consent-open]"), function (b) {
       b.hidden = false;
       b.addEventListener("click", open);
@@ -238,6 +395,50 @@
       window.__consent.onChange(aplicar);
     }
   };
+})();
+;
+/* js/ads.js */
+/* Anuncios manuales de AdSense. Inactivo hasta que AdSense apruebe la web.
+ *
+ * Cómo se activa (cuando aprueben):
+ *   1. lib/manifest.js → adsense: "ca-pub-4424403733078041"  (consent.js carga entonces el script y el aviso TCF de Google)
+ *   2. En AdSense → Anuncios → Por bloque de anuncios, crea 1 bloque «Adaptable» y pon su número (10 cifras) en
+ *      adsenseSlots de lib/manifest.js, p. ej. adsenseSlots: { articulo: "1234567890" }.
+ *   3. Publicar. Mientras falte el número o el cliente, el hueco queda oculto y no ocupa espacio.
+ *
+ * Reglas: los huecos <div class="ad-slot" data-ad-slot="articulo"> solo van en guías y artículos, nunca dentro del
+ * generador ni pegados a los botones de descargar. Cada hueco reserva alto (CSS .ad-slot) para no mover el texto.
+ */
+(function () {
+  "use strict";
+
+  function activar() {
+    var marca = window.__BRAND__ || {};
+    var cliente = marca.adsense, slots = marca.adsenseSlots || {};
+    if (!cliente) return;
+    Array.prototype.forEach.call(document.querySelectorAll(".ad-slot[data-ad-slot]"), function (hueco) {
+      var id = slots[hueco.getAttribute("data-ad-slot")];
+      if (!id || hueco.getAttribute("data-ad-listo")) return;
+      hueco.setAttribute("data-ad-listo", "1");
+      var etiqueta = document.createElement("p");
+      etiqueta.className = "ad-etiqueta";
+      etiqueta.textContent = "Publicidad";
+      var ins = document.createElement("ins");
+      ins.className = "adsbygoogle";
+      ins.style.display = "block";
+      ins.setAttribute("data-ad-client", cliente);
+      ins.setAttribute("data-ad-slot", id);
+      ins.setAttribute("data-ad-format", "auto");
+      ins.setAttribute("data-full-width-responsive", "true");
+      hueco.appendChild(etiqueta);
+      hueco.appendChild(ins);
+      hueco.hidden = false;
+      try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { hueco.hidden = true; }
+    });
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", activar);
+  else activar();
 })();
 ;
 /* main.js */
@@ -453,5 +654,131 @@
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
+})();
+;
+/* js/checklist.js */
+/* Comprobador «¿Cumples el RD 723/2026?». Todo ocurre en el navegador: no se guarda ni se envía nada. */
+(function () {
+  "use strict";
+
+  var PREGUNTAS = [
+    { id: "plazo", texto: "¿La relación laboral va a durar más de cuatro semanas?", ayuda: "Los contratos de cuatro semanas o menos no están obligados (art. 2.2).",
+      puerta: true,
+      falta: { t: "No estás obligado a entregarlo", d: "Con cuatro semanas o menos no hace falta el documento (art. 2.2). Si la relación se alarga, sí.", href: "../rd-723-2026/", a: "Ver la guía" } },
+    { id: "antes", texto: "¿Lo entregas antes de que la persona empiece a trabajar?", ayuda: "El documento tiene que llegar antes del primer día (art. 7.1).",
+      falta: { t: "Entrégalo antes del primer día", d: "Prepáralo con tiempo: con el generador son unos 3 minutos.", href: "../", a: "Hacer el documento" } },
+    { id: "apartados", texto: "¿Recoge los 17 apartados del artículo 3.2, o tu contrato escrito ya los incluye todos?", ayuda: "En varios apartados basta citar la ley o el convenio (art. 3.3).",
+      falta: { t: "Completa los 17 apartados (a–q)", d: "Si falta alguno, no cumples del todo. El generador los trae todos y propone los textos.", href: "../rd-723-2026/#apartados", a: "Ver los 17 apartados" } },
+    { id: "formato", texto: "¿Lo das en papel o en un formato electrónico que se pueda abrir, guardar e imprimir?", ayuda: "Art. 6.2.",
+      falta: { t: "Usa un formato válido", d: "Vale papel o un archivo que la persona pueda abrir, guardar e imprimir (por ejemplo, un PDF por correo).", href: "../enviar-documento-informativo/", a: "Cómo enviarlo" } },
+    { id: "prueba", texto: "¿Guardas la prueba de la entrega (recibí firmado o correo enviado)?", ayuda: "La empresa debe conservar la prueba de la entrega (art. 6.2).",
+      falta: { t: "Guarda la prueba de la entrega", d: "El PDF de InfoContrato lleva dos ejemplares y un recibí: uno para la persona y otro firmado para ti.", href: "../", a: "Descargar con recibí" } },
+    { id: "cambios", texto: "Si cambia alguna condición, ¿la comunicarás por escrito como tarde el día en que se aplique?", ayuda: "Art. 7.3.",
+      falta: { t: "Comunica los cambios por escrito", d: "Cualquier cambio de condiciones se comunica por escrito como tarde el día en que surte efecto.", href: "../comunicar-cambio/", a: "Comunicar un cambio" } },
+    { id: "plantilla", texto: "¿Sabes qué hacer si alguien contratado antes del 5 de octubre de 2026 te lo pide?", ayuda: "Tienes 30 días hábiles desde la petición (disposición transitoria única).",
+      falta: { t: "Prepara la respuesta para la plantilla actual", d: "Solo hay que dárselo a quien ya trabaja si lo pide, y con un plazo propio.", href: "../plantilla-actual/", a: "Plantilla ya contratada" } }
+  ];
+
+  var form = document.getElementById("comprobador");
+  var salida = document.getElementById("resultado");
+  if (!form || !salida) return;
+
+  PREGUNTAS.forEach(function (p, i) {
+    var fs = document.createElement("fieldset");
+    fs.className = "check-pregunta";
+    var lg = document.createElement("legend");
+    lg.textContent = (i + 1) + ". " + p.texto;
+    fs.appendChild(lg);
+    var ay = document.createElement("p");
+    ay.className = "fine-print";
+    ay.textContent = p.ayuda;
+    fs.appendChild(ay);
+    var op = document.createElement("div");
+    op.className = "check-opciones";
+    [["si", "Sí"], ["no", "No"], ["ns", "No lo sé"]].forEach(function (o) {
+      var lb = document.createElement("label");
+      var inp = document.createElement("input");
+      inp.type = "radio"; inp.name = p.id; inp.value = o[0];
+      lb.appendChild(inp);
+      lb.appendChild(document.createTextNode(" " + o[1]));
+      op.appendChild(lb);
+    });
+    fs.appendChild(op);
+    form.appendChild(fs);
+  });
+
+  var boton = document.createElement("button");
+  boton.type = "submit";
+  boton.className = "btn btn--primary";
+  boton.textContent = "Ver el resultado";
+  var aviso = document.createElement("p");
+  aviso.className = "fine-print";
+  aviso.id = "check-aviso";
+  aviso.setAttribute("role", "status");
+  form.appendChild(boton);
+  form.appendChild(aviso);
+
+  function el(tag, cls, txt) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (txt) n.textContent = txt;
+    return n;
+  }
+
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var resp = {}, sinContestar = 0;
+    PREGUNTAS.forEach(function (p) {
+      var c = form.querySelector('input[name="' + p.id + '"]:checked');
+      if (c) resp[p.id] = c.value; else sinContestar++;
+    });
+    if (sinContestar) {
+      aviso.textContent = "Te faltan " + sinContestar + " pregunta" + (sinContestar > 1 ? "s" : "") + " por contestar.";
+      return;
+    }
+    aviso.textContent = "";
+    salida.hidden = false;
+    salida.textContent = "";
+
+    var puerta = PREGUNTAS[0];
+    if (resp[puerta.id] === "no") {
+      salida.appendChild(el("h2", "", "Resultado: no estás obligado"));
+      salida.appendChild(el("p", "", puerta.falta.d));
+      var l0 = el("a", "btn btn--secondary", puerta.falta.a);
+      l0.href = puerta.falta.href;
+      salida.appendChild(l0);
+      salida.focus();
+      return;
+    }
+
+    var pendientes = PREGUNTAS.filter(function (p) { return !p.puerta && resp[p.id] !== "si"; });
+    var ok = PREGUNTAS.length - 1 - pendientes.length;
+    salida.appendChild(el("h2", "", pendientes.length ? "Te faltan " + pendientes.length + " de " + (PREGUNTAS.length - 1) + " puntos" : "Cumples los " + (PREGUNTAS.length - 1) + " puntos"));
+    salida.appendChild(el("p", "", "Has marcado " + ok + " de " + (PREGUNTAS.length - 1) + " como resueltos (los «No lo sé» cuentan como pendientes)."));
+    if (pendientes.length) {
+      var ul = el("ul", "check-pendientes");
+      pendientes.forEach(function (p) {
+        var li = el("li");
+        li.appendChild(el("strong", "", p.falta.t));
+        li.appendChild(el("span", "", " " + p.falta.d + " "));
+        var a = el("a", "", p.falta.a);
+        a.href = p.falta.href;
+        li.appendChild(a);
+        ul.appendChild(li);
+      });
+      salida.appendChild(ul);
+      var cta = el("div", "cta-box");
+      var b = el("a", "btn btn--primary", "Hacer el documento gratis");
+      b.href = "../";
+      cta.appendChild(b);
+      var m = el("a", "btn btn--secondary", "Qué multa hay");
+      m.href = "../multa-documento-informativo/";
+      cta.appendChild(m);
+      salida.appendChild(cta);
+    } else {
+      salida.appendChild(el("p", "", "Buen trabajo. Guarda la prueba de cada entrega al menos tres años (plazo general de prescripción de las infracciones, art. 4.1 de la LISOS)."));
+    }
+    salida.focus();
+  });
 })();
 ;

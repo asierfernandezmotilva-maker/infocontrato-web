@@ -17,6 +17,8 @@
 
   var KEY = "ic:consent:v1";
   var CADUCA_MS = 730 * 24 * 3600 * 1000; // 24 meses
+  // Contenido del banner ({base} = carpeta raíz de la web). publicar.py lo copia tal cual en el HTML publicado: una sola línea.
+  var MARCADO = '<div class="container"><p id="consent-texto">Usamos Google Analytics para contar visitas, solo si lo aceptas. Lo que escribes en el formulario nunca sale de tu dispositivo. <a href="{base}cookies.html">Política de cookies</a></p><div class="consent-opciones" hidden><label class="check"><input type="checkbox" checked disabled> <span><strong>Técnicas</strong>: recuerdan esta elección y tu borrador en este navegador. Siempre activas.</span></label><label class="check"><input type="checkbox" id="consent-analitica"> <span><strong>Analíticas</strong>: Google Analytics, para saber cuántas personas usan la web.</span></label></div><div class="consent-acciones"><button type="button" class="btn btn--secondary" data-accion="aceptar">Aceptar</button><button type="button" class="btn btn--secondary" data-accion="rechazar">Rechazar</button><button type="button" class="btn btn--secondary" data-accion="configurar">Configurar</button></div></div>';
   var estado = null;                      // { analitica, fecha } o null si aún no ha decidido
   var oyentes = [];
   var barra = null, volverA = null;
@@ -48,26 +50,18 @@
 
   function mostrar(configurar) {
     if (!barra) {
-      var base = window.__IC__ ? window.__IC__.base : "";
-      barra = document.createElement("section");
-      barra.className = "consent";
-      barra.setAttribute("role", "dialog");
-      barra.setAttribute("aria-label", "Cookies");
-      barra.setAttribute("aria-describedby", "consent-texto");
-      barra.innerHTML =
-        '<div class="container">' +
-          '<p id="consent-texto">Usamos Google Analytics para contar visitas, solo si lo aceptas. ' +
-          'Lo que escribes en el formulario nunca sale de tu dispositivo. <a href="' + base + 'cookies.html">Política de cookies</a></p>' +
-          '<div class="consent-opciones" hidden>' +
-            '<label class="check"><input type="checkbox" checked disabled> <span><strong>Técnicas</strong>: recuerdan esta elección y tu borrador en este navegador. Siempre activas.</span></label>' +
-            '<label class="check"><input type="checkbox" id="consent-analitica"> <span><strong>Analíticas</strong>: Google Analytics, para saber cuántas personas usan la web.</span></label>' +
-          '</div>' +
-          '<div class="consent-acciones">' +
-            '<button type="button" class="btn btn--secondary" data-accion="aceptar">Aceptar</button>' +
-            '<button type="button" class="btn btn--secondary" data-accion="rechazar">Rechazar</button>' +
-            '<button type="button" class="btn btn--secondary" data-accion="configurar">Configurar</button>' +
-          '</div>' +
-        '</div>';
+      // En la copia publicada el banner ya viene en el HTML (publicar.py copia MARCADO) para salir en el primer
+      // pintado; si no está, se crea aquí.
+      barra = document.querySelector("section.consent");
+      if (!barra) {
+        barra = document.createElement("section");
+        barra.className = "consent";
+        barra.setAttribute("role", "dialog");
+        barra.setAttribute("aria-label", "Cookies");
+        barra.setAttribute("aria-describedby", "consent-texto");
+        barra.innerHTML = MARCADO.replace("{base}", window.__IC__ ? window.__IC__.base : "");
+        document.body.appendChild(barra);
+      }
       barra.addEventListener("click", function (ev) {
         var b = ev.target.closest("[data-accion]");
         if (!b) return;
@@ -77,7 +71,6 @@
         else if (accion === "guardar") decidir(barra.querySelector("#consent-analitica").checked);
         else modoConfigurar();
       });
-      document.body.appendChild(barra);
     }
     if (configurar) modoConfigurar();
   }
@@ -144,9 +137,11 @@
   }
 
   function init() {
-    var cliente = (window.__BRAND__ || {}).adsense;
+    var cliente = (window.__BRAND__ || {}).adsense, previo = document.querySelector("section.consent");
+    estado = cliente ? null : leer();
+    // El banner que trae el HTML sobra con el aviso de Google o si ya hay decisión (sin localStorage no lo quita el HTML)
+    if (previo && (cliente || estado)) previo.remove();
     if (cliente) return initGoogle(cliente);
-    estado = leer();
     Array.prototype.forEach.call(document.querySelectorAll("[data-consent-open]"), function (b) {
       b.hidden = false;
       b.addEventListener("click", open);

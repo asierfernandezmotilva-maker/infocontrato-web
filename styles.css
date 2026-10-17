@@ -18,7 +18,9 @@
   src: url("assets/fonts/atkinson-hyperlegible-next-latin-wght.woff2") format("woff2");
   font-weight: 200 800;
   font-style: normal;
-  font-display: swap;
+  /* optional (no swap): la fuente va precargada; si no llega en ~100 ms esa visita sigue con la del sistema y no se
+     repinta todo el texto más tarde (el repintado bajaba el Speed Index de PageSpeed en móvil) */
+  font-display: optional;
 }
 
 /* =============================================================

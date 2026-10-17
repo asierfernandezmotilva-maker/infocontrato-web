@@ -657,66 +657,28 @@
 })();
 ;
 /* js/checklist.js */
-/* Comprobador «¿Cumples el RD 723/2026?». Todo ocurre en el navegador: no se guarda ni se envía nada. */
+/* Comprobador «¿Cumples el RD 723/2026?». Todo ocurre en el navegador: no se guarda ni se envía nada.
+   Las 7 preguntas (name = id de PREGUNTAS) están escritas en comprobar-cumplimiento/index.html. */
 (function () {
   "use strict";
 
   var PREGUNTAS = [
-    { id: "plazo", texto: "¿La relación laboral va a durar más de cuatro semanas?", ayuda: "Los contratos de cuatro semanas o menos no están obligados (art. 2.2).",
-      puerta: true,
+    { id: "plazo", puerta: true,
       falta: { t: "No estás obligado a entregarlo", d: "Con cuatro semanas o menos no hace falta el documento (art. 2.2). Si la relación se alarga, sí.", href: "../rd-723-2026/", a: "Ver la guía" } },
-    { id: "antes", texto: "¿Lo entregas antes de que la persona empiece a trabajar?", ayuda: "El documento tiene que llegar antes del primer día (art. 7.1).",
-      falta: { t: "Entrégalo antes del primer día", d: "Prepáralo con tiempo: con el generador son unos 3 minutos.", href: "../", a: "Hacer el documento" } },
-    { id: "apartados", texto: "¿Recoge los 17 apartados del artículo 3.2, o tu contrato escrito ya los incluye todos?", ayuda: "En varios apartados basta citar la ley o el convenio (art. 3.3).",
-      falta: { t: "Completa los 17 apartados (a–q)", d: "Si falta alguno, no cumples del todo. El generador los trae todos y propone los textos.", href: "../rd-723-2026/#apartados", a: "Ver los 17 apartados" } },
-    { id: "formato", texto: "¿Lo das en papel o en un formato electrónico que se pueda abrir, guardar e imprimir?", ayuda: "Art. 6.2.",
-      falta: { t: "Usa un formato válido", d: "Vale papel o un archivo que la persona pueda abrir, guardar e imprimir (por ejemplo, un PDF por correo).", href: "../enviar-documento-informativo/", a: "Cómo enviarlo" } },
-    { id: "prueba", texto: "¿Guardas la prueba de la entrega (recibí firmado o correo enviado)?", ayuda: "La empresa debe conservar la prueba de la entrega (art. 6.2).",
-      falta: { t: "Guarda la prueba de la entrega", d: "El PDF de InfoContrato lleva dos ejemplares y un recibí: uno para la persona y otro firmado para ti.", href: "../", a: "Descargar con recibí" } },
-    { id: "cambios", texto: "Si cambia alguna condición, ¿la comunicarás por escrito como tarde el día en que se aplique?", ayuda: "Art. 7.3.",
-      falta: { t: "Comunica los cambios por escrito", d: "Cualquier cambio de condiciones se comunica por escrito como tarde el día en que surte efecto.", href: "../comunicar-cambio/", a: "Comunicar un cambio" } },
-    { id: "plantilla", texto: "¿Sabes qué hacer si alguien contratado antes del 5 de octubre de 2026 te lo pide?", ayuda: "Tienes 30 días hábiles desde la petición (disposición transitoria única).",
-      falta: { t: "Prepara la respuesta para la plantilla actual", d: "Solo hay que dárselo a quien ya trabaja si lo pide, y con un plazo propio.", href: "../plantilla-actual/", a: "Plantilla ya contratada" } }
+    { id: "antes", falta: { t: "Entrégalo antes del primer día", d: "Prepáralo con tiempo: con el generador son unos 3 minutos.", href: "../", a: "Hacer el documento" } },
+    { id: "apartados", falta: { t: "Completa los 17 apartados (a–q)", d: "Si falta alguno, no cumples del todo. El generador los trae todos y propone los textos.", href: "../rd-723-2026/#apartados", a: "Ver los 17 apartados" } },
+    { id: "formato", falta: { t: "Usa un formato válido", d: "Vale papel o un archivo que la persona pueda abrir, guardar e imprimir (por ejemplo, un PDF por correo).", href: "../enviar-documento-informativo/", a: "Cómo enviarlo" } },
+    { id: "prueba", falta: { t: "Guarda la prueba de la entrega", d: "El PDF de InfoContrato lleva dos ejemplares y un recibí: uno para la persona y otro firmado para ti.", href: "../", a: "Descargar con recibí" } },
+    { id: "cambios", falta: { t: "Comunica los cambios por escrito", d: "Cualquier cambio de condiciones se comunica por escrito como tarde el día en que surte efecto.", href: "../comunicar-cambio/", a: "Comunicar un cambio" } },
+    { id: "plantilla", falta: { t: "Prepara la respuesta para la plantilla actual", d: "Solo hay que dárselo a quien ya trabaja si lo pide, y con un plazo propio.", href: "../plantilla-actual/", a: "Plantilla ya contratada" } }
   ];
 
   var form = document.getElementById("comprobador");
   var salida = document.getElementById("resultado");
   if (!form || !salida) return;
 
-  PREGUNTAS.forEach(function (p, i) {
-    var fs = document.createElement("fieldset");
-    fs.className = "check-pregunta";
-    var lg = document.createElement("legend");
-    lg.textContent = (i + 1) + ". " + p.texto;
-    fs.appendChild(lg);
-    var ay = document.createElement("p");
-    ay.className = "fine-print";
-    ay.textContent = p.ayuda;
-    fs.appendChild(ay);
-    var op = document.createElement("div");
-    op.className = "check-opciones";
-    [["si", "Sí"], ["no", "No"], ["ns", "No lo sé"]].forEach(function (o) {
-      var lb = document.createElement("label");
-      var inp = document.createElement("input");
-      inp.type = "radio"; inp.name = p.id; inp.value = o[0];
-      lb.appendChild(inp);
-      lb.appendChild(document.createTextNode(" " + o[1]));
-      op.appendChild(lb);
-    });
-    fs.appendChild(op);
-    form.appendChild(fs);
-  });
-
-  var boton = document.createElement("button");
-  boton.type = "submit";
-  boton.className = "btn btn--primary";
-  boton.textContent = "Ver el resultado";
-  var aviso = document.createElement("p");
-  aviso.className = "fine-print";
-  aviso.id = "check-aviso";
-  aviso.setAttribute("role", "status");
-  form.appendChild(boton);
-  form.appendChild(aviso);
+  // Las preguntas están en el HTML de la página (sin salto al cargar); aquí solo se calcula el resultado.
+  var aviso = document.getElementById("check-aviso");
 
   function el(tag, cls, txt) {
     var n = document.createElement(tag);

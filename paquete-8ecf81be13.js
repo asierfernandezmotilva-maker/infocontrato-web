@@ -658,7 +658,7 @@
 ;
 /* js/comunidad.js */
 /* Comunidad de propietarios (Ley 49/1960, de Propiedad Horizontal): mayorías de la junta (/mayorias-junta-propietarios/),
-   convocatoria (/convocatoria-junta-propietarios/), reparto de una derrama (/derrama-comunidad/) y carta a un moroso
+   convocatoria (/convocatoria-junta-propietarios/), reparto de una derrama (/mayorias-junta-propietarios/#derrama) y carta a un moroso
    (/reclamar-moroso-comunidad/). Todo en el navegador. Las funciones puras las prueba tools/test-comunidad.js; la parte
    de cada página solo se activa si encuentra su formulario. Artículos comprobados en el texto consolidado del BOE. */
 (function (root) {

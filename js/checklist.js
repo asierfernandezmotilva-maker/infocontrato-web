@@ -1,5 +1,5 @@
 /* Comprobador «¿Cumples el RD 723/2026?». Todo ocurre en el navegador: no se guarda ni se envía nada.
-   Las 7 preguntas (name = id de PREGUNTAS) están escritas en comprobar-cumplimiento/index.html. */
+   Las 7 preguntas (name = id de PREGUNTAS) están escritas en multa-documento-informativo/index.html. */
 (function () {
   "use strict";
 
@@ -11,7 +11,7 @@
     { id: "formato", falta: { t: "Usa un formato válido", d: "Vale papel o un archivo que la persona pueda abrir, guardar e imprimir (por ejemplo, un PDF por correo).", href: "../rd-723-2026/#enviar", a: "Cómo enviarlo" } },
     { id: "prueba", falta: { t: "Guarda la prueba de la entrega", d: "El PDF de InfoContrato lleva dos ejemplares y un recibí: uno para la persona y otro firmado para ti.", href: "../", a: "Descargar con recibí" } },
     { id: "cambios", falta: { t: "Comunica los cambios por escrito", d: "Cualquier cambio de condiciones se comunica por escrito como tarde el día en que surte efecto.", href: "../comunicar-cambio/", a: "Comunicar un cambio" } },
-    { id: "plantilla", falta: { t: "Prepara la respuesta para la plantilla actual", d: "Solo hay que dárselo a quien ya trabaja si lo pide, y con un plazo propio.", href: "../plantilla-actual/", a: "Plantilla ya contratada" } }
+    { id: "plantilla", falta: { t: "Prepara la respuesta para la plantilla actual", d: "Solo hay que dárselo a quien ya trabaja si lo pide, y con un plazo propio.", href: "../rd-723-2026/#plantilla-actual", a: "Plantilla ya contratada" } }
   ];
 
   var form = document.getElementById("comprobador");

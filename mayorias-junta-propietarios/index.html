@@ -25,7 +25,7 @@
   <link rel="apple-touch-icon" href="../assets/img/favicon-apple-touch.png">
   <link rel="preload" href="../assets/fonts/atkinson-hyperlegible-next-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="../styles.css?v=20261019">
-  <script defer src="../paquete-e9ae25787f.js?v=20261019"></script>
+  <script defer src="../paquete-8ecf81be13.js?v=20261019"></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -38,7 +38,7 @@
         "description": "Calcula si un acuerdo de tu comunidad sale: mayoría de propietarios y cuotas, tres quintos, unanimidad y voto presunto de los ausentes (art. 17 LPH).",
         "inLanguage": "es-ES",
         "datePublished": "2026-10-07",
-        "dateModified": "2026-10-16",
+        "dateModified": "2026-10-19",
         "isPartOf": {
           "@id": "https://infocontrato.es/#organizacion"
         },
@@ -119,7 +119,7 @@
           </ol>
         </nav>
         <h1>¿Sale el acuerdo? Calculadora de mayorías de la junta de propietarios</h1>
-        <p class="updated">Actualizado el <time datetime="2026-10-16">16 de octubre de 2026</time>. Revisado con el texto consolidado de la Ley de Propiedad Horizontal en el BOE. Redacta y revisa <a href="../quienes-somos.html">Asier Fernández</a>.</p>
+        <p class="updated">Actualizado el <time datetime="2026-10-19">19 de octubre de 2026</time>. Revisado con el texto consolidado de la Ley de Propiedad Horizontal en el BOE. Redacta y revisa <a href="../quienes-somos.html">Asier Fernández</a>.</p>
       </header>
 
       <p class="lead">En una comunidad de vecinos casi nada se aprueba por «mayoría» a secas: la Ley de Propiedad Horizontal pide dos mayorías a la vez, la de propietarios y la de cuotas de participación, y según el asunto exige mayoría simple, un tercio, tres quintos o unanimidad. Escribe los votos de tu junta y te decimos si el acuerdo sale, si depende de los ausentes o si no sale, con el artículo que lo dice.</p>
@@ -244,7 +244,72 @@
         <p>Pueden impugnar ante el juez quienes votaron en contra haciéndolo constar, los ausentes y los que fueron privados del voto indebidamente, si están al corriente de pago: en 3 meses desde el acuerdo, o en un año si es contrario a la ley o a los estatutos; para los ausentes el plazo cuenta desde que se les notifica (art. 18). Impugnar no suspende el acuerdo salvo que el juez lo decida.</p>
 
         <h2 id="obras-obligatorias">Obras que no se votan</h2>
-        <p>Las obras de conservación, seguridad y habitabilidad del edificio y las de accesibilidad universal son obligatorias sin acuerdo de la junta. También lo son las que pida el propietario de una vivienda o local donde viva, trabaje o preste servicios voluntarios una persona con discapacidad o mayor de 70 años, si su coste repercutido al año, descontadas las ayudas públicas, no pasa de 12 mensualidades de gastos comunes; si las ayudas llegan al 70 % del coste, la obra es obligatoria sin ese límite, y la comunidad está obligada a pedir las ayudas disponibles (art. 10.1.b, redactado por la Ley 4/2026, de 1 de octubre, en vigor desde el 23 de octubre de 2026). La junta solo decide cómo se reparte y se paga la derrama (art. 10.2): usa el <a href="../derrama-comunidad/">reparto por coeficientes</a>.</p>
+        <p>Las obras de conservación, seguridad y habitabilidad del edificio y las de accesibilidad universal son obligatorias sin acuerdo de la junta. También lo son las que pida el propietario de una vivienda o local donde viva, trabaje o preste servicios voluntarios una persona con discapacidad o mayor de 70 años, si su coste repercutido al año, descontadas las ayudas públicas, no pasa de 12 mensualidades de gastos comunes; si las ayudas llegan al 70 % del coste, la obra es obligatoria sin ese límite, y la comunidad está obligada a pedir las ayudas disponibles (art. 10.1.b, redactado por la Ley 4/2026, de 1 de octubre, en vigor desde el 23 de octubre de 2026). La junta solo decide cómo se reparte y se paga la derrama (art. 10.2): usa el <a href="../mayorias-junta-propietarios/#derrama">reparto por coeficientes</a>.</p>
+
+        <h2 id="derrama">Reparto de una derrama entre los vecinos</h2>
+        <p>Cada propietario paga los gastos comunes «con arreglo a la cuota de participación fijada en el título» (art. 9.1.e de la Ley de Propiedad Horizontal), salvo que la escritura o los estatutos digan otra cosa. Escribe el importe de la derrama y la lista de viviendas con su coeficiente, y tendrás la tabla con lo que paga cada una, lista para imprimir y repartir.</p>
+      </div>
+
+      <section class="tool-card" aria-labelledby="derrama-calc-titulo">
+        <h3 id="derrama-calc-titulo">Reparte la derrama</h3>
+        <noscript><p class="fine-print">La calculadora necesita JavaScript. La regla del reparto está explicada debajo.</p></noscript>
+        <form id="calc-derrama" novalidate>
+          <div class="field-row">
+            <div class="field"><label for="importe">Importe total de la derrama (€)</label><input id="importe" name="importe" inputmode="decimal" autocomplete="off" placeholder="Por ejemplo, 12.000" required></div>
+            <div class="field">
+              <label for="modo">Cómo se reparte</label>
+              <select id="modo" name="modo">
+                <option value="coeficiente">Por coeficiente (lo normal)</option>
+                <option value="iguales">A partes iguales (si lo dice el título)</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="lista">Viviendas y locales, uno por línea, con su coeficiente al final</label>
+            <span class="field-help" id="lista-ayuda">Vale con un espacio, una coma o un punto y coma antes del número: «2.º A 4,25». Los coeficientes están en la escritura de división horizontal o en el recibo de la comunidad.</span>
+            <textarea id="lista" name="lista" rows="8" aria-describedby="lista-ayuda" placeholder="Bajo A 3,25
+Bajo B 3,25
+1.º A 4,10
+1.º B 4,10
+Local 1 8,50" required></textarea>
+          </div>
+          <button type="submit" class="btn btn--primary">Calcular el reparto</button>
+        </form>
+        <div class="alquiler-resultado" id="calc-derrama-resultado" aria-live="polite" tabindex="-1" hidden></div>
+      </section>
+      <p class="fine-print">Lo que escribes no sale de tu navegador.</p>
+
+      <section class="hoja-registro" id="hoja-derrama" aria-labelledby="hoja-titulo" hidden>
+        <h3 id="hoja-titulo">Reparto de la derrama</h3>
+        <div class="tabla-scroll" tabindex="0">
+          <table>
+            <thead><tr><th scope="col">Vivienda o local</th><th scope="col">Coeficiente</th><th scope="col">Importe</th></tr></thead>
+            <tbody id="derrama-filas"></tbody>
+            <tfoot><tr><th scope="row" colspan="2">Total</th><td class="num" id="derrama-total"></td></tr></tfoot>
+          </table>
+        </div>
+        <p class="hoja-pie">Reparto según la cuota de participación de cada finca (art. 9.1.e de la Ley de Propiedad Horizontal). Aprobado en la junta de ____________. Forma de pago: ______________________</p>
+        <p class="hoja-acciones cta-box">
+          <button type="button" class="btn btn--primary" data-imprimir>Imprimir o guardar en PDF</button>
+        </p>
+      </section>
+
+      <div class="prose">
+        <h3 id="derrama-regla">La regla del reparto</h3>
+        <p>Los gastos generales se pagan según la cuota de participación de cada piso o local, que fija la escritura de división horizontal, salvo que el título o los estatutos establezcan otro reparto (art. 9.1.e). No usar un servicio no exime de pagarlo: quien vive en un bajo paga el ascensor, salvo que los estatutos lo excluyan (art. 9.2). Cambiar las cuotas de participación exige unanimidad (art. 17.6).</p>
+
+        <h3 id="derrama-quien-paga">Quién paga si el piso se vende</h3>
+        <p>Las derramas para mejoras las paga quien sea propietario cuando se exijan las cantidades, no quien lo era al aprobarlas (art. 17.11). El comprador de un piso responde, con el propio piso, de las deudas con la comunidad del año en curso y de los tres anteriores; por eso el vendedor tiene que aportar en la escritura un certificado de deudas que el secretario emite en 7 días con el visto bueno del presidente (art. 9.1.e).</p>
+
+        <h3 id="derrama-no-pagan">Quién puede no pagar</h3>
+        <ul>
+          <li>En las infraestructuras de telecomunicaciones, renovables y nuevos suministros aprobadas por un tercio, quien no votó a favor no paga la instalación ni su mantenimiento; si más tarde quiere usarlas, abona su parte actualizada (art. 17.1).</li>
+          <li>En las mejoras no necesarias aprobadas por tres quintos, si la cuota de instalación pasa de 3 mensualidades de gastos comunes, quien votó en contra no está obligado a pagar ni se le cambia la cuota (art. 17.4).</li>
+          <li>Las obras de accesibilidad acordadas válidamente las paga toda la comunidad aunque superen 12 mensualidades (art. 17.2), y las de conservación y accesibilidad obligatorias del art. 10.1 se pagan sin votación: la junta solo reparte la derrama (art. 10.2).</li>
+        </ul>
+
+        <h3 id="derrama-fondo">Fondo de reserva</h3>
+        <p>La comunidad tiene que mantener un fondo de reserva de al menos el 10 % de su último presupuesto ordinario, al que todos contribuyen según su cuota, para obras de conservación, reparación, rehabilitación, accesibilidad y eficiencia energética (art. 9.1.f). Si el fondo no cubre la obra, se aprueba una derrama.</p>
 
         <h2 id="fuentes">Fuentes</h2>
         <ul class="fuentes">
@@ -260,11 +325,9 @@
         <h2 id="relacionadas-titulo">Te puede interesar</h2>
         <ul>
           <li><a href="../convocatoria-junta-propietarios/">Convocar la junta</a></li>
-          <li><a href="../derrama-comunidad/">Repartir una derrama</a></li>
           <li><a href="../reclamar-moroso-comunidad/">Reclamar a un vecino moroso</a></li>
           <li><a href="../gastos-agencia-alquiler/">Agencia, comunidad e IBI</a></li>
           <li><a href="../reparaciones-alquiler/">Exigir reparaciones al casero</a></li>
-          <li><a href="../fianza-alquiler/">Fianza del alquiler</a></li>
         </ul>
       </nav>
       <!-- /relacionadas -->
@@ -294,7 +357,7 @@
           <li><a href="../prorroga-alquiler/">Prórroga del alquiler</a></li>
           <li><a href="../decreto-vivienda-2026/">Decreto de vivienda 2026</a></li>
           <li><a href="../mayorias-junta-propietarios/">Mayorías de la junta de vecinos</a></li>
-          <li><a href="../novedades/">Novedades</a></li>
+          <li><a href="../guias/#novedades">Novedades</a></li>
         </ul>
       </nav>
       <nav aria-label="Información legal y contacto">

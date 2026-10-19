@@ -8,7 +8,7 @@
       falta: { t: "No estás obligado a entregarlo", d: "Con cuatro semanas o menos no hace falta el documento (art. 2.2). Si la relación se alarga, sí.", href: "../rd-723-2026/", a: "Ver la guía" } },
     { id: "antes", falta: { t: "Entrégalo antes del primer día", d: "Prepáralo con tiempo: con el generador son unos 3 minutos.", href: "../", a: "Hacer el documento" } },
     { id: "apartados", falta: { t: "Completa los 17 apartados (a–q)", d: "Si falta alguno, no cumples del todo. El generador los trae todos y propone los textos.", href: "../rd-723-2026/#apartados", a: "Ver los 17 apartados" } },
-    { id: "formato", falta: { t: "Usa un formato válido", d: "Vale papel o un archivo que la persona pueda abrir, guardar e imprimir (por ejemplo, un PDF por correo).", href: "../enviar-documento-informativo/", a: "Cómo enviarlo" } },
+    { id: "formato", falta: { t: "Usa un formato válido", d: "Vale papel o un archivo que la persona pueda abrir, guardar e imprimir (por ejemplo, un PDF por correo).", href: "../rd-723-2026/#enviar", a: "Cómo enviarlo" } },
     { id: "prueba", falta: { t: "Guarda la prueba de la entrega", d: "El PDF de InfoContrato lleva dos ejemplares y un recibí: uno para la persona y otro firmado para ti.", href: "../", a: "Descargar con recibí" } },
     { id: "cambios", falta: { t: "Comunica los cambios por escrito", d: "Cualquier cambio de condiciones se comunica por escrito como tarde el día en que surte efecto.", href: "../comunicar-cambio/", a: "Comunicar un cambio" } },
     { id: "plantilla", falta: { t: "Prepara la respuesta para la plantilla actual", d: "Solo hay que dárselo a quien ya trabaja si lo pide, y con un plazo propio.", href: "../plantilla-actual/", a: "Plantilla ya contratada" } }

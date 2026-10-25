@@ -1,6 +1,6 @@
 # InfoContrato
 
-> Web gratuita en español con herramientas y guías de derecho laboral, alquiler de vivienda y comunidades de propietarios en España. Genera el documento informativo del Real Decreto 723/2026 (en vigor el 5 de octubre de 2026) sin enviar datos a ningún servidor. Cada texto cita el artículo y la norma del BOE en que se basa.
+> Web gratuita en español con herramientas y guías sobre el contrato de trabajo y el derecho laboral en España. Genera el documento informativo del Real Decreto 723/2026 (en vigor el 5 de octubre de 2026) sin enviar datos a ningún servidor. Cada texto cita el artículo y la norma del BOE en que se basa.
 
 Información general, no asesoramiento jurídico. Responsable: Asier Fernández. Contacto en https://infocontrato.es/contacto/
 
@@ -15,8 +15,6 @@ Información general, no asesoramiento jurídico. Responsable: Asier Fernández.
 - [Carta para pedir tus condiciones de trabajo (RD 723/2026)](https://infocontrato.es/solicitar-informacion/): Descarga gratis la carta para pedir a tu empresa la información escrita de tus condiciones de trabajo del RD 723/2026, con la norma y el plazo.
 - [Multa por no entregar el documento informativo RD 723/2026](https://infocontrato.es/multa-documento-informativo/): Qué multa hay si la empresa no entrega el documento informativo del RD 723/2026: infracción leve de 70 a 750 euros, cómo se gradúa y cómo evitarla.
 - [Empleo de hogar y RD 723/2026: qué entregar | InfoContrato](https://infocontrato.es/empleo-hogar/): Si contratas a una persona para el hogar, también tienes que darle sus condiciones por escrito. Qué cambia con el RD 1620/2011, un ejemplo y el PDF gratis.
-- [Contrato temporal y RD 723/2026: qué incluir | InfoContrato](https://infocontrato.es/contrato-temporal/): Qué debe decir el documento informativo de un contrato temporal: la causa, los hechos que la justifican, la fecha de fin y la regla de las cuatro semanas.
-- [Fijo discontinuo y RD 723/2026: qué incluir | InfoContrato](https://infocontrato.es/fijo-discontinuo/): Qué debe decir el documento informativo de un contrato fijo discontinuo: los periodos de actividad e inactividad o su estimación y el llamamiento.
 - [Modelos de contrato de trabajo SEPE en PDF (2026)](https://infocontrato.es/modelos-contrato-sepe/): Descarga directa en PDF de los modelos de contrato del SEPE: indefinido, temporal, formativos y anexos, con enlace oficial y su artículo del Estatuto.
 
 ## Trabajo: calculadoras y guías
@@ -32,28 +30,11 @@ Información general, no asesoramiento jurídico. Responsable: Asier Fernández.
 - [Preaviso al terminar un contrato de trabajo: plazos](https://infocontrato.es/preaviso-fin-contrato/): Cuántos días de preaviso hay que dar al despedir, al acabar un temporal o al dimitir, y qué poner en el apartado n) del documento informativo RD 723/2026.
 - [Calendario laboral 2027: festivos de cada comunidad (BOE)](https://infocontrato.es/calendario-laboral-2027/): Calendario laboral 2027 publicado en el BOE: los festivos nacionales y los de cada comunidad autónoma, con los puentes y qué pasa si trabajas un festivo.
 
-## Alquiler de vivienda
-
-- [Actualización del alquiler 2026: calculadora con IRAV e IPC](https://infocontrato.es/actualizar-alquiler/): Calcula cuánto puede subir tu alquiler al cumplir el año, con el IRAV del INE y el tope del 2 % del decreto de vivienda (BOE 7/10/2026). Con carta gratis.
-- [Último IRAV publicado por el INE: tabla 2026 mes a mes](https://infocontrato.es/irav/): Último IRAV publicado por el INE y tabla de todos los meses desde 2024, con el IPC al lado. Qué es, a qué contratos se aplica y cómo calcular tu subida.
-- [Prórroga alquiler 2 años: requisitos y modelo de solicitud](https://infocontrato.es/prorroga-alquiler/): Prórroga extraordinaria del alquiler de 2 años (Real Decreto-ley 29/2026, BOE del 7/10/2026): requisitos y modelo de solicitud para el casero.
-- [Decreto vivienda 2026 resumen: RDL 28/2026 y 29/2026 del BOE](https://infocontrato.es/decreto-vivienda-2026/): Resumen del decreto de vivienda 2026 (RDL 28/2026 y 29/2026, BOE-A-2026-20822 y 20823): prórroga de 2 años, tope del 2 % y cuándo entra en vigor cada cosa.
-- [Duración del contrato de alquiler: calculadora de prórrogas](https://infocontrato.es/duracion-contrato-alquiler/): Calcula hasta cuándo dura tu alquiler: mínimo de 5 o 7 años, prórroga tácita (5 años desde el 15/11/2026), avisos e indemnización si el casero no renueva.
-- [¿Quién paga la agencia en un alquiler? Gastos y honorarios](https://infocontrato.es/gastos-agencia-alquiler/): La agencia y formalizar el contrato los paga el casero; desde el 8/10/2026 el IBI no se puede imponer al inquilino. Quién paga cada gasto (art. 20 LAU).
-- [El casero no arregla: carta para exigir reparaciones](https://infocontrato.es/reparaciones-alquiler/): Carta para exigir al casero las reparaciones con presupuesto: si en 15 días no responde, puedes hacerlas y descontarlas de la renta (art. 21.5 LAU, 2026).
-- [Indemnización por no renovar el alquiler: calculadora 2026](https://infocontrato.es/indemnizacion-alquiler/): Desde el 15/11/2026, si el casero no renueva el alquiler sin causa debe indemnizar al inquilino: 12 mensualidades o una por año vivido. Calcula la tuya.
-
-## Comunidad de propietarios
-
-- [Mayorías en la junta de propietarios: calculadora (LPH)](https://infocontrato.es/mayorias-junta-propietarios/): Calcula si un acuerdo de tu comunidad sale: mayoría de propietarios y cuotas, tres quintos, unanimidad y voto presunto de los ausentes (art. 17 LPH).
-- [Convocatoria de junta de propietarios: modelo y plazos](https://infocontrato.es/convocatoria-junta-propietarios/): Genera la convocatoria de la junta de vecinos con el orden del día, la segunda convocatoria, los morosos sin voto y los 6 días de antelación (art. 16 LPH).
-- [Reclamar a un vecino moroso: carta y proceso monitorio](https://infocontrato.es/reclamar-moroso-comunidad/): Carta de requerimiento de pago al vecino que no paga la comunidad, con plazo, intereses y aviso del monitorio (arts. 9, 15.2 y 21 LPH), lista para copiar.
-
 ## Optional
 
 - [Quiénes somos | InfoContrato](https://infocontrato.es/quienes-somos.html): Quién hace InfoContrato, por qué existe, cómo se preparan y revisan sus contenidos con el BOE, el SEPE y el INE, cómo se financia y cómo avisar de errores.
 - [Aviso legal | InfoContrato](https://infocontrato.es/aviso-legal.html): Quién es el titular de esta web, condiciones de uso de la herramienta del RD 723/2026, propiedad intelectual y ley aplicable.
 - [Política de privacidad | InfoContrato](https://infocontrato.es/privacidad.html): Los datos del formulario no salen de tu dispositivo y Google Analytics solo se usa si lo aceptas. Qué se trata, con quién y cómo ejercer tus derechos.
 - [Política de cookies | InfoContrato](https://infocontrato.es/cookies.html): Cookies técnicas para recordar tu elección y tu borrador, y Google Analytics solo si lo aceptas. Qué guarda cada una, cuánto dura y cómo cambiarlo.
-- [Guías y herramientas gratis para tus trámites](https://infocontrato.es/guias/): Índice de InfoContrato: generador del documento informativo del RD 723/2026, guías por casos, modelo del SEPE, multa y calculadora del alquiler.
+- [Guías y herramientas gratis sobre el contrato de trabajo](https://infocontrato.es/guias/): Índice de InfoContrato: generador del documento informativo del RD 723/2026, guías por casos, modelo del SEPE, multa y calculadoras laborales.
 - [Contacto con InfoContrato](https://infocontrato.es/contacto/): Cómo contactar con InfoContrato para avisar de un error, proponer una mejora o enlazarnos. Respondemos por correo; no damos asesoramiento legal individual.

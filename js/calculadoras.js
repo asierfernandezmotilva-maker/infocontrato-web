@@ -1,5 +1,4 @@
-/* Calculadoras pequeñas: periodo de prueba (/periodo-de-prueba/), salario mínimo (/salario-minimo-2026/) y duración
-   del alquiler (/duracion-contrato-alquiler/). Todo en el navegador. Las funciones puras las prueba
+/* Calculadoras pequeñas: periodo de prueba (/periodo-de-prueba/), salario mínimo (/salario-minimo-2026/). Todo en el navegador. Las funciones puras las prueba
    tools/test-calculadoras.js; la parte de cada página solo se activa si encuentra su formulario. */
 (function (root) {
   "use strict";
@@ -36,30 +35,6 @@
     if (e.horas > e.completa) return { error: "Tus horas no pueden superar las de la jornada completa." };
     var f = e.horas / e.completa;
     return { fraccion: f, mensual14: redondea(S.mensual14 * f), mensual12: redondea(S.mensual12 * f), anual: redondea(S.anual * f), diario: redondea(S.diario * f) };
-  }
-
-  // ---- Duración del alquiler de vivienda: arts. 9, 10 y 11 de la Ley de Arrendamientos Urbanos (contratos desde el 6/3/2019) ----
-  // El RDL 28/2026 reescribe el art. 10 desde el 15/11/2026: si el periodo mínimo vence desde esa fecha, el casero avisa con
-  // 6 meses (4 si el vencimiento es anterior al 15/05/2027, DT única.2), la prórroga tácita es de 5 o 7 años y, si el casero
-  // no renueva sin causa del art. 10.2, indemniza. Si el mínimo venció antes, el contrato sigue en la prórroga tácita antigua
-  // (por años, hasta 3) hasta que termine (DT única.3).
-  // e = { inicio: "AAAA-MM-DD", anios: duración pactada en años, juridica: el casero es una empresa }
-  var ART10_2026 = "2026-11-15";
-  function duracionAlquiler(e) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(e.inicio || "")) return { error: "Escribe la fecha de inicio del contrato." };
-    if (e.inicio < "2019-03-06") return { error: "Los contratos firmados antes del 6 de marzo de 2019 tienen otros plazos. Esta calculadora cubre los firmados desde esa fecha." };
-    if (!(e.anios > 0) || e.anios > 30) return { error: "Escribe la duración pactada en años (por ejemplo, 1)." };
-    var minimo = e.juridica ? 7 : 5;
-    var meses = Math.round(e.anios * 12);
-    var r = { minimo: minimo, finPactado: sumarFecha(e.inicio, meses), prorrogaObligatoria: meses < minimo * 12 };
-    r.finMinimo = r.prorrogaObligatoria ? sumarFecha(e.inicio, minimo * 12) : r.finPactado;
-    r.nuevoArt10 = r.finMinimo >= ART10_2026;
-    r.mesesAvisoCasero = r.nuevoArt10 && r.finMinimo >= sumarFecha(ART10_2026, 6) ? 6 : 4;
-    r.avisoCasero = sumarFecha(r.finMinimo, -r.mesesAvisoCasero);
-    r.avisoInquilino = sumarFecha(r.finMinimo, -2);
-    r.finTacita = sumarFecha(r.finMinimo, r.nuevoArt10 ? minimo * 12 : 36);
-    r.desistimiento = sumarFecha(e.inicio, 6);
-    return r;
   }
 
   // ---- Carta de dimisión: preaviso del convenio o de la costumbre (art. 49.1.d ET), contado desde el día siguiente (art. 5.1 CC) ----
@@ -102,20 +77,6 @@
   // superior del índice de precios de referencia o, si no lo hay, la renta vigente ----
   // e = { entrada: "AAAA-MM-DD" (desde cuándo vive), salida: "AAAA-MM-DD" (vencimiento), renta, indice (opcional) }
   function diasEntre(a, b) { var x = a.split("-"), y = b.split("-"); return Math.round((Date.UTC(y[0], y[1] - 1, y[2]) - Date.UTC(x[0], x[1] - 1, x[2])) / 86400000); }
-  function indemnizacionAlquiler(e) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(e.entrada || "") || !/^\d{4}-\d{2}-\d{2}$/.test(e.salida || "")) return { error: "Escribe las dos fechas." };
-    if (e.salida <= e.entrada) return { error: "La fecha en que termina el contrato tiene que ser posterior a la de entrada." };
-    if (e.salida < ART10_2026) return { error: "La indemnización solo existe para los contratos que terminan desde el 15 de noviembre de 2026 (Real Decreto-ley 28/2026)." };
-    if (!(e.renta > 0)) return { error: "Escribe la renta mensual actual." };
-    var base = e.indice > 0 ? e.indice : e.renta;
-    var meses = 0;
-    while (sumarFecha(e.entrada, meses + 1) <= e.salida) meses++;
-    var ancla = sumarFecha(e.entrada, meses);
-    var anios = (meses + diasEntre(ancla, e.salida) / diasEntre(ancla, sumarFecha(ancla, 1))) / 12;
-    var r = { base: base, porIndice: e.indice > 0, anios: redondea(anios), doce: redondea(12 * base), porAnios: redondea(base * anios) };
-    r.total = Math.max(r.doce, r.porAnios);
-    return r;
-  }
 
   // ---- Finiquito e indemnización: arts. 31, 38.1, 49.1.c, 53.1, 53.4, 55.7, 56.1 y DT 11.ª del Estatuto de los Trabajadores ----
   // e = { inicio, fin: "AAAA-MM-DD" (fin = último día), anual: salario bruto anual con pagas extra,
@@ -188,7 +149,7 @@
     return parseFloat(v.indexOf(",") >= 0 ? v.replace(/\./g, "").replace(",", ".") : v);
   }
 
-  var API = { num: num, periodoPrueba: periodoPrueba, smi: smi, duracionAlquiler: duracionAlquiler, indemnizacionAlquiler: indemnizacionAlquiler, sumarFecha: sumarFecha, cartaDimision: cartaDimision, vacaciones: vacaciones, finiquito: finiquito, mesesServicio: mesesServicio };
+  var API = { num: num, periodoPrueba: periodoPrueba, smi: smi, sumarFecha: sumarFecha, cartaDimision: cartaDimision, vacaciones: vacaciones, finiquito: finiquito, mesesServicio: mesesServicio };
   if (typeof module !== "undefined" && module.exports) { module.exports = API; return; }
 
   // ---- Páginas ----
@@ -262,14 +223,6 @@
     root.addEventListener("afterprint", function () { document.body.classList.remove("imprimir-hoja"); });
   }
 
-  enviar("calc-indemnizacion", function (f, s) {
-    var r = indemnizacionAlquiler({ entrada: f.entrada.value, salida: f.salida.value, renta: num(f.renta.value), indice: num(f.indice.value) });
-    if (r.error) { s.append(p(r.error, "notice notice--error")); return; }
-    s.append(cifra("Indemnización: ", euros(r.total)));
-    s.append(p("Es la mayor de estas dos cantidades: 12 mensualidades (" + euros(r.doce) + ") o una mensualidad por cada año vivido en la vivienda (" + r.anios.toLocaleString("es-ES") + " años: " + euros(r.porAnios) + "), calculadas con " +
-      (r.porIndice ? "el valor superior del índice de precios de referencia (" + euros(r.base) + " al mes)" : "la renta actual (" + euros(r.base) + " al mes), porque no has indicado el valor del índice de precios de referencia") + " (art. 10.1 LAU)."));
-    s.append(p("Se cobra al entregar la vivienda. No hay indemnización si el casero hace constar en el aviso una de las causas del art. 10.2 (abajo), si el aviso de no renovar es anterior al 7 de octubre de 2026 o si podías pedir una prórroga legal obligatoria para el casero y no la pediste.", "fine-print"));
-  });
 
   enviar("calc-finiquito", function (f, s) {
     var r = finiquito({ inicio: f.inicio.value, fin: f.fin.value, anual: num(f.anual.value), pagas: f.pagas.value, causa: f.causa.value,
@@ -294,19 +247,4 @@
     s.append(p("Son importes brutos y orientativos. Al salario, las vacaciones y las pagas se les aplican la retención de IRPF y la cotización; la indemnización está exenta de IRPF hasta la cuantía obligatoria del Estatuto (art. 7.e de la Ley del IRPF). Si tu convenio mejora algo, manda el convenio.", "fine-print"));
   });
 
-  enviar("calc-duracion", function (f, s) {
-    var r = duracionAlquiler({ inicio: f.inicio.value, anios: num(f.anios.value), juridica: f.casero.value === "juridica" });
-    if (r.error) { s.append(p(r.error, "notice notice--error")); return; }
-    s.append(cifra("El contrato dura, como mínimo, hasta el ", fechaLarga(r.finMinimo)));
-    if (r.prorrogaObligatoria) s.append(p("Se pactó por menos de " + r.minimo + " años: al vencer el " + fechaLarga(r.finPactado) + " se prorroga año a año, obligatoriamente para el casero, hasta cumplir " + r.minimo + " años. El inquilino puede irse al final de cada año avisando con 30 días de antelación (art. 9.1)."));
-    s.append(p("Para no renovar después, el casero tiene que avisar como tarde el " + fechaLarga(r.avisoCasero) + " (" + r.mesesAvisoCasero + " meses antes) y el inquilino como tarde el " + fechaLarga(r.avisoInquilino) + " (2 meses antes) (art. 10.1" + (r.nuevoArt10 && r.mesesAvisoCasero === 4 ? " y disposición transitoria única del Real Decreto-ley 28/2026" : "") + ")."));
-    if (r.nuevoArt10) {
-      s.append(p("Si nadie avisa, el contrato se prorroga " + r.minimo + " años más, hasta el " + fechaLarga(r.finTacita) + ", y así sucesivamente (art. 10.1, redactado por el Real Decreto-ley 28/2026, en vigor desde el 15 de noviembre de 2026)."));
-      s.append(p("Si el casero avisa de que no renueva sin una causa del art. 10.2 (por ejemplo, necesitar la vivienda para él o su familia hasta el segundo grado, o que el inquilino tenga otra vivienda en el municipio), tiene que indemnizar al inquilino al entregar la vivienda: lo mayor entre 12 mensualidades según el valor superior del índice de precios de referencia de la vivienda y una mensualidad por cada año vivido en ella; si la vivienda no tiene valor en el índice, se usa la renta vigente (art. 10.1)."));
-    } else {
-      s.append(p("Si nadie avisa, se prorroga año a año hasta el " + fechaLarga(r.finTacita) + " como máximo. En esos años el inquilino puede irse avisando con un mes de antelación al final de cada anualidad (art. 10.1 en su redacción anterior al 15 de noviembre de 2026, que sigue rigiendo esta prórroga por la disposición transitoria única del Real Decreto-ley 28/2026). Al terminar, se aplicará el nuevo artículo 10."));
-    }
-    if (r.finMinimo <= "2028-12-31") s.append(p("Como el contrato termina antes del 31 de diciembre de 2028, si estás al corriente de pago puedes pedir una prórroga extraordinaria de hasta 2 años (Real Decreto-ley 29/2026): mira cómo en la página de la prórroga del alquiler.", "fine-print"));
-    s.append(p("Desde el " + fechaLarga(r.desistimiento) + " el inquilino puede dejar la vivienda avisando con 30 días de antelación; si el contrato lo prevé, pagaría una mensualidad por cada año que falte, o la parte proporcional (art. 11).", "fine-print"));
-  });
 })(typeof window !== "undefined" ? window : {});

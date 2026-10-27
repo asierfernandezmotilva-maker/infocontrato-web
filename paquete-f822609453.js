@@ -10,7 +10,7 @@
     gaId: "G-55FQ2C5YG5",              // ID de medición de Google Analytics 4 («G-…»); vacío = sin analítica. Pasos en js/analytics.js
     adsense: "",           // «ca-pub-4424403733078041» cuando AdSense APRUEBE la web: carga los anuncios y cambia el banner propio por el de Google (js/consent.js)
     adsenseSlots: {},      // números de bloque de AdSense, p. ej. { articulo: "1234567890" } (ver js/ads.js)
-    updated: "2026-10-22", // fecha visible «Actualizado el…»; se pone la del día de publicación (sección 11)
+    updated: "2026-10-27", // fecha visible «Actualizado el…»; se pone la del día de publicación (sección 11)
     palette: { accent: "#0b5d73", accentDark: "#5cc3d9" } // igual que --accent en styles.css (claro / oscuro)
   };
 })();
@@ -65,16 +65,6 @@
       restoPymeMeses: 3,        // resto, en empresas de menos de 25 trabajadores
       umbralPymeTrabajadores: 25,
       hogarMeses: 2             // empleo de hogar (art. 6.2 del Real Decreto 1620/2011)
-    },
-
-    // Alquiler de vivienda (/actualizar-alquiler/). Los índices del INE están en lib/indices-alquiler.js
-    // (tools/actualizar-indices.py, cada mes). topeExtra: límite extraordinario a la actualización anual que fija un
-    // real decreto-ley; null = no hay ninguno en vigor. El RDL 26/2026 (2 %) lo derogó el Congreso el 02/10/2026
-    // (BOE-A-2026-20526); el RDL 29/2026 (BOE 07/10/2026, BOE-A-2026-20823, en vigor el 08/10/2026) lo repone en su
-    // disposición final sexta: actualizaciones entre el 08/10/2026 y el 31/12/2027, máximo 2 % si no hay nuevo pacto
-    // (y 0 % si la renta supera el límite del índice de precios de referencia). Si el Congreso no lo convalida, poner null.
-    alquiler: {
-      topeExtra: { desde: "2026-10-08", hasta: "2027-12-31", maximo: 2, norma: "disposición final sexta del Real Decreto-ley 29/2026" }
     },
 
     enlaces: {
@@ -656,204 +646,164 @@
   else boot();
 })();
 ;
-/* js/comunidad.js */
-/* Comunidad de propietarios (Ley 49/1960, de Propiedad Horizontal): mayorías de la junta (/mayorias-junta-propietarios/),
-   convocatoria (/convocatoria-junta-propietarios/), reparto de una derrama (/mayorias-junta-propietarios/#derrama) y carta a un moroso
-   (/reclamar-moroso-comunidad/). Todo en el navegador. Las funciones puras las prueba tools/test-comunidad.js; la parte
-   de cada página solo se activa si encuentra su formulario. Artículos comprobados en el texto consolidado del BOE. */
+/* js/calculadoras.js */
+/* Calculadoras pequeñas: periodo de prueba (/periodo-de-prueba/), salario mínimo (/salario-minimo-2026/). Todo en el navegador. Las funciones puras las prueba
+   tools/test-calculadoras.js; la parte de cada página solo se activa si encuentra su formulario. */
 (function (root) {
   "use strict";
 
   var MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-  var FECHA = /^\d{4}-\d{2}-\d{2}$/;
   function fechaLarga(f) { var p = f.split("-"); return +p[2] + " de " + MESES[+p[1] - 1] + " de " + p[0]; }
   function euros(n) { return n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €"; }
-  function pct(n) { return n.toLocaleString("es-ES", { maximumFractionDigits: 2 }) + " %"; }
-  function r2(n) { return Math.round(n * 100) / 100; }
-  function sumarDias(f, d) { var p = f.split("-").map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2] + d)).toISOString().slice(0, 10); }
-  function diasEntre(a, b) { var x = a.split("-"), y = b.split("-"); return Math.round((Date.UTC(y[0], y[1] - 1, y[2]) - Date.UTC(x[0], x[1] - 1, x[2])) / 864e5); }
-  function minutos(h) { var m = /^(\d{1,2}):(\d{2})$/.exec(h || ""); return m ? +m[1] * 60 + +m[2] : null; }
-  function hora(min) { min = ((min % 1440) + 1440) % 1440; return String(Math.floor(min / 60)).padStart(2, "0") + ":" + String(min % 60).padStart(2, "0"); }
+  function redondea(n) { return Math.round(n * 100) / 100; }
 
-  // ---- Mayorías de la junta: art. 17 de la Ley de Propiedad Horizontal (quórum: art. 16.2; morosos sin voto: art. 15.2) ----
-  // num/den: fracción exigida; estricta: «mayoría» = más de la mitad; total: se mide sobre el total de propietarios y cuotas
-  // (si no, sobre los asistentes en segunda convocatoria); presunto: los ausentes que no se opongan en 30 días cuentan a favor (17.8)
-  var REGLAS = {
-    simple:        { nombre: "mayoría simple", base: "art. 17.7", num: 1, den: 2, estricta: true, total: false, presunto: false },
-    accesibilidad: { nombre: "mayoría de propietarios que representen la mayoría de las cuotas", base: "art. 17.2", num: 1, den: 2, estricta: true, total: true, presunto: true },
-    energia:       { nombre: "mayoría simple de propietarios que representen la mayoría simple de las cuotas", base: "art. 17.2, párrafo tercero", num: 1, den: 2, estricta: true, total: true, presunto: true },
-    tercio:        { nombre: "un tercio de los propietarios que representen un tercio de las cuotas", base: "art. 17.1 y 17.3", num: 1, den: 3, estricta: false, total: true, presunto: false },
-    tresquintos:   { nombre: "tres quintas partes del total de los propietarios que representen tres quintas partes de las cuotas", base: "art. 17.3 y 17.4", num: 3, den: 5, estricta: false, total: true, presunto: true },
-    turisticos:    { nombre: "tres quintas partes del total de los propietarios que representen tres quintas partes de las cuotas", base: "art. 17.12", num: 3, den: 5, estricta: false, total: true, presunto: true },
-    unanimidad:    { nombre: "unanimidad del total de los propietarios y de las cuotas", base: "art. 17.6", num: 1, den: 1, estricta: false, total: true, presunto: true },
-    recarga:       { sinVoto: true, base: "art. 17.5", texto: "Instalar un punto de recarga para uso privado en una plaza de garaje individual no se vota: basta comunicarlo antes a la comunidad. El coste de la instalación y la electricidad los paga quien lo instala." },
-    obligatorias:  { sinVoto: true, base: "art. 10.1", texto: "Las obras necesarias para conservar el edificio y las de accesibilidad universal (y las que pida un propietario para una persona con discapacidad o mayor de 70 años, si no pasan de 12 mensualidades de gastos comunes al año una vez descontadas las ayudas) son obligatorias y no necesitan acuerdo: la junta solo reparte la derrama y decide cómo se paga (art. 10.2)." }
+  // Suma meses a una fecha «de fecha a fecha»; si el mes final no tiene ese día, vence el último (art. 5.1 del Código Civil).
+  function sumarFecha(f, meses) {
+    var p = f.split("-").map(Number);
+    var total = p[0] * 12 + (p[1] - 1) + meses, y = Math.floor(total / 12), m = total - y * 12;
+    var ultimo = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    return y + "-" + String(m + 1).padStart(2, "0") + "-" + String(Math.min(p[2], ultimo)).padStart(2, "0");
+  }
+
+  // ---- Periodo de prueba: arts. 14.1 y 11 del Estatuto de los Trabajadores; art. 6.2 del RD 1620/2011 (hogar) ----
+  // e = { tipo: "indefinido" | "temporal-largo" | "temporal-corto" | "practicas" | "alternancia" | "hogar", titulado, pyme }
+  function periodoPrueba(e) {
+    if (e.tipo === "alternancia") return { meses: 0, base: "art. 11.2.l del Estatuto de los Trabajadores", texto: "En el contrato de formación en alternancia no se puede pactar periodo de prueba." };
+    if (e.tipo === "practicas") return { meses: 1, base: "art. 11.3.e del Estatuto de los Trabajadores", texto: "Como máximo 1 mes en el contrato para la obtención de práctica profesional, salvo que el convenio diga otra cosa." };
+    if (e.tipo === "hogar") return { meses: 2, base: "art. 6.2 del Real Decreto 1620/2011", texto: "Como máximo 2 meses en el empleo de hogar, salvo que el convenio diga otra cosa. Durante la prueba, el preaviso para terminar no puede pasar de 7 días naturales." };
+    if (e.tipo === "temporal-corto") return { meses: 1, base: "art. 14.1 del Estatuto de los Trabajadores", texto: "Como máximo 1 mes en los contratos temporales de seis meses o menos, salvo que el convenio diga otra cosa." };
+    var meses = e.titulado ? 6 : e.pyme ? 3 : 2;
+    var quien = e.titulado ? "técnicos titulados" : e.pyme ? "quien no es técnico titulado en una empresa de menos de 25 personas trabajadoras" : "quien no es técnico titulado";
+    return { meses: meses, base: "art. 14.1 del Estatuto de los Trabajadores", texto: "Como máximo " + meses + " meses para " + quien + ", si el convenio no fija otro límite." };
+  }
+
+  // ---- Salario mínimo a prorrata de la jornada (art. 1 del RD 126/2026: «si se realizase jornada inferior se percibirá a prorrata») ----
+  // e = { horas, completa }; S = LEGAL.smi
+  function smi(e, S) {
+    if (!(e.horas > 0) || !(e.completa > 0)) return { error: "Escribe las horas de tu jornada y las de la jornada completa." };
+    if (e.horas > e.completa) return { error: "Tus horas no pueden superar las de la jornada completa." };
+    var f = e.horas / e.completa;
+    return { fraccion: f, mensual14: redondea(S.mensual14 * f), mensual12: redondea(S.mensual12 * f), anual: redondea(S.anual * f), diario: redondea(S.diario * f) };
+  }
+
+  // ---- Carta de dimisión: preaviso del convenio o de la costumbre (art. 49.1.d ET), contado desde el día siguiente (art. 5.1 CC) ----
+  // e = { nombre, empresa, puesto, fecha: "AAAA-MM-DD" (entrega de la carta), dias }
+  function cartaDimision(e) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(e.fecha || "")) return { error: "Escribe la fecha en que entregarás la carta." };
+    if (!(e.dias >= 0) || e.dias > 120 || Math.round(e.dias) !== e.dias) return { error: "Escribe los días de preaviso de tu convenio (por ejemplo, 15)." };
+    var p = e.fecha.split("-").map(Number);
+    var d = new Date(Date.UTC(p[0], p[1] - 1, p[2] + e.dias));
+    var ultimo = d.toISOString().slice(0, 10);
+    var nombre = e.nombre || "[Tu nombre y apellidos]";
+    var texto = (e.empresa || "[Nombre de la empresa]") + "\nA la atención de la dirección\n\n" +
+      "Asunto: comunicación de baja voluntaria\n\n" +
+      "Yo, " + nombre + ", con DNI [número], que trabajo en la empresa como " + (e.puesto || "[puesto]") + ", le comunico mi decisión de causar baja voluntaria.\n\n" +
+      (e.dias > 0 ? "Para cumplir el preaviso de " + e.dias + " días, mi último día de trabajo será el " + fechaLarga(ultimo) + " (art. 49.1.d del Estatuto de los Trabajadores).\n\n"
+                  : "Mi último día de trabajo será el " + fechaLarga(ultimo) + ".\n\n") +
+      "Le ruego que me entregue la propuesta de liquidación de las cantidades que me correspondan (finiquito), como prevé el artículo 49.2 del Estatuto de los Trabajadores, y una copia firmada de esta carta como acuse de recibo.\n\n" +
+      "En [localidad], a " + fechaLarga(e.fecha) + ".\n\nAtentamente,\n\n" + nombre + "\n[Firma]\n\n" +
+      "Recibido por la empresa: fecha __________ y firma __________";
+    return { ultimo: ultimo, texto: texto };
+  }
+
+  // ---- Vacaciones generadas: 30 días naturales al año como mínimo (art. 38.1 ET), en proporción a los días del periodo ----
+  // e = { inicio, fin: "AAAA-MM-DD" (ambos incluidos), anuales: días al año (30 o los del convenio), disfrutados }
+  function vacaciones(e) {
+    var ok = /^\d{4}-\d{2}-\d{2}$/;
+    if (!ok.test(e.inicio || "") || !ok.test(e.fin || "")) return { error: "Escribe la fecha de inicio y la de fin." };
+    if (e.fin < e.inicio) return { error: "La fecha de fin tiene que ser posterior a la de inicio." };
+    var dias = Math.round((Date.parse(e.fin) - Date.parse(e.inicio)) / 864e5) + 1;
+    if (dias > 366) return { error: "Calcula cada año por separado: el periodo no puede pasar de un año." };
+    if (!(e.anuales >= 30) || e.anuales > 60) return { error: "Los días de vacaciones al año no pueden ser menos de 30 naturales (art. 38.1)." };
+    var generados = Math.round(e.anuales * dias / 365 * 100) / 100;
+    if (generados > e.anuales) generados = e.anuales;
+    var disfrutados = e.disfrutados > 0 ? e.disfrutados : 0;
+    return { dias: dias, generados: generados, pendientes: Math.round((generados - disfrutados) * 100) / 100 };
+  }
+
+  // ---- Indemnización al inquilino si el casero no renueva (art. 10.1 LAU, redactado por el RDL 28/2026, desde el 15/11/2026):
+  // la mayor entre 12 mensualidades y una por año residido (prorrateo por meses y, dentro del mes, por días), con el valor
+  // superior del índice de precios de referencia o, si no lo hay, la renta vigente ----
+  // e = { entrada: "AAAA-MM-DD" (desde cuándo vive), salida: "AAAA-MM-DD" (vencimiento), renta, indice (opcional) }
+  function diasEntre(a, b) { var x = a.split("-"), y = b.split("-"); return Math.round((Date.UTC(y[0], y[1] - 1, y[2]) - Date.UTC(x[0], x[1] - 1, x[2])) / 86400000); }
+
+  // ---- Finiquito e indemnización: arts. 31, 38.1, 49.1.c, 53.1, 53.4, 55.7, 56.1 y DT 11.ª del Estatuto de los Trabajadores ----
+  // e = { inicio, fin: "AAAA-MM-DD" (fin = último día), anual: salario bruto anual con pagas extra,
+  //       pagas: "prorrateadas" | "semestral" | "anual" (cómo se generan las dos pagas extra; lo fija el convenio, art. 31),
+  //       causa (ver CAUSAS), vacAnuales, vacDisfrutadas (este año), diasMes (días del último mes sin cobrar), preaviso (días dados) }
+  // Salario diario: mensual / 30 para días, vacaciones y pagas; anual / 365 para indemnización y preaviso.
+  // Antigüedad en despidos: por meses, contando la fracción de mes como mes completo (criterio habitual de los tribunales).
+  var CAUSAS = {
+    "fin-temporal": "art. 49.1.c", "fin-formativo": "art. 49.1.c", "objetivo": "arts. 53.1.b y 53.4",
+    "improcedente": "art. 56.1 y disposición transitoria undécima", "dimision": "art. 49.1.d", "disciplinario": "art. 55.7", "prueba": "art. 14.2"
   };
-  var EPS = 1e-9;
-  function alcanza(regla, n, q, baseN, baseQ) {
-    return regla.estricta ? n * regla.den > regla.num * baseN && q * regla.den > regla.num * baseQ + EPS
-                          : n * regla.den >= regla.num * baseN && q * regla.den + EPS >= regla.num * baseQ;
+  function siguiente(f) { var p = f.split("-").map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2] + 1)).toISOString().slice(0, 10); }
+  function mesesServicio(desde, hasta) {   // meses de desde a hasta (incluido), con la fracción como mes completo
+    var fin = siguiente(hasta), m = 0;
+    while (sumarFecha(desde, m + 1) <= fin) m++;
+    return sumarFecha(desde, m) < fin ? m + 1 : m;
   }
-  function necesarios(regla, baseN, baseQ) {
-    var n = regla.estricta ? Math.floor(regla.num * baseN / regla.den) + 1 : Math.ceil(regla.num * baseN / regla.den - EPS);
-    return { n: n, q: r2(regla.num * baseQ / regla.den) };
-  }
-  // e = { tipo, convocatoria: "primera" | "segunda", propietarios, cuotasTotal (100 si no se indica), morosos, cuotasMorosos,
-  //       favor, cuotasFavor, contra, cuotasContra, abstencion, cuotasAbstencion }
-  function mayoria(e) {
-    var regla = REGLAS[e.tipo];
-    if (!regla) return { error: "Elige el tipo de acuerdo." };
-    if (regla.sinVoto) return { sinVoto: true, base: regla.base, texto: regla.texto };
-    var N = e.propietarios, QT = e.cuotasTotal > 0 ? e.cuotasTotal : 100;
-    if (!(N >= 2) || N !== Math.round(N) || N > 5000) return { error: "Escribe cuántos propietarios tiene la comunidad (un número entero, 2 o más)." };
-    var m = e.morosos > 0 ? Math.round(e.morosos) : 0, qm = e.cuotasMorosos > 0 ? e.cuotasMorosos : 0;
-    var f = e.favor > 0 ? Math.round(e.favor) : 0, qf = e.cuotasFavor > 0 ? e.cuotasFavor : 0;
-    var c = e.contra > 0 ? Math.round(e.contra) : 0, qc = e.cuotasContra > 0 ? e.cuotasContra : 0;
-    var a = e.abstencion > 0 ? Math.round(e.abstencion) : 0, qa = e.cuotasAbstencion > 0 ? e.cuotasAbstencion : 0;
-    if (f + c + a + m > N) return { error: "Los votos a favor, en contra, las abstenciones y los morosos suman más propietarios de los que tiene la comunidad." };
-    if (qf + qc + qa + qm > QT + 0.01) return { error: "Las cuotas que has escrito suman más que el total de cuotas de la comunidad." };
-    if (f > 0 && !(qf > 0)) return { error: "Escribe las cuotas de participación que suman los votos a favor." };
-    var totalN = N - m, totalQ = r2(QT - qm);
-    var asistN = f + c + a, asistQ = r2(qf + qc + qa);
-    var ausN = totalN - asistN, ausQ = r2(totalQ - asistQ);
-    var quorum = asistN * 2 > totalN && asistQ * 2 > totalQ + EPS;
-    var r = { regla: regla, tipo: e.tipo, favor: f, cuotasFavor: qf, ausentes: ausN, cuotasAusentes: ausQ, asistentes: asistN, cuotasAsistentes: asistQ, quorum: quorum, totalN: totalN, totalQ: totalQ, segunda: false };
-    var baseN = totalN, baseQ = totalQ;
-    if (!regla.total) {
-      r.segunda = e.convocatoria === "segunda" || !quorum;
-      r.sinQuorum = e.convocatoria !== "segunda" && !quorum;
-      if (r.segunda) { baseN = asistN; baseQ = asistQ; }
+  function finiquito(e) {
+    var ok = /^\d{4}-\d{2}-\d{2}$/;
+    if (!ok.test(e.inicio || "") || !ok.test(e.fin || "")) return { error: "Escribe la fecha de inicio y el último día de trabajo." };
+    if (e.fin < e.inicio) return { error: "El último día tiene que ser posterior al inicio." };
+    if (!(e.anual > 0) || e.anual > 1e7) return { error: "Escribe tu salario bruto anual, con las pagas extra." };
+    if (!CAUSAS[e.causa]) return { error: "Elige cómo termina el contrato." };
+    var vacAnuales = e.vacAnuales > 0 ? e.vacAnuales : 30;
+    if (vacAnuales < 30 || vacAnuales > 60) return { error: "Los días de vacaciones al año no pueden ser menos de 30 naturales (art. 38.1)." };
+    var anioFin = e.fin.slice(0, 4), finEx = siguiente(e.fin), max = function (a, b) { return a > b ? a : b; };
+    var mensual = e.anual / (e.pagas === "prorrateadas" ? 12 : 14), diarioMes = mensual / 30, diario = e.anual / 365;
+    var r = { causa: e.causa, base: CAUSAS[e.causa], mensual: redondea(mensual) };
+
+    r.diasMes = Math.min(30, e.diasMes >= 0 ? e.diasMes : +e.fin.slice(8));
+    r.salarioMes = redondea(diarioMes * r.diasMes);
+
+    var desdeVac = max(e.inicio, anioFin + "-01-01");
+    r.vacGeneradas = redondea(Math.min(vacAnuales, vacAnuales * diasEntre(desdeVac, finEx) / 365));
+    r.vacPendientes = redondea(Math.max(0, r.vacGeneradas - (e.vacDisfrutadas > 0 ? e.vacDisfrutadas : 0)));
+    r.vacImporte = redondea(r.vacPendientes * diarioMes);
+
+    var paga = e.anual / 14, devengo = function (inicioPeriodo) {   // parte de una paga generada desde inicioPeriodo hasta el fin
+      return paga * diasEntre(max(e.inicio, inicioPeriodo), finEx) / diasEntre(inicioPeriodo, sumarFecha(inicioPeriodo, e.pagas === "semestral" ? 6 : 12));
+    };
+    if (e.pagas === "semestral") r.pagasImporte = redondea(devengo(anioFin + (+e.fin.slice(5, 7) <= 6 ? "-01-01" : "-07-01")));
+    else if (e.pagas === "anual") r.pagasImporte = redondea(devengo(anioFin + "-01-01") + devengo(e.fin >= anioFin + "-07-01" ? anioFin + "-07-01" : (anioFin - 1) + "-07-01"));
+    else r.pagasImporte = 0;
+
+    r.preavisoFalta = e.causa === "objetivo" ? Math.max(0, 15 - (e.preaviso > 0 ? e.preaviso : 0)) : 0;
+    r.preavisoImporte = redondea(r.preavisoFalta * diario);
+
+    var dias = 0;
+    if (e.causa === "fin-temporal") dias = 12 * diasEntre(e.inicio, finEx) / 365;
+    else if (e.causa === "objetivo") dias = Math.min(20 * mesesServicio(e.inicio, e.fin) / 12, 365);
+    else if (e.causa === "improcedente") {
+      if (e.inicio < "2012-02-12") {
+        var d1 = 45 * mesesServicio(e.inicio, e.fin < "2012-02-11" ? e.fin : "2012-02-11") / 12;
+        var d2 = e.fin >= "2012-02-12" ? 33 * mesesServicio("2012-02-12", e.fin) / 12 : 0;
+        dias = Math.min(d1 + d2, d1 > 720 ? Math.min(d1, 42 * 365 / 12) : 720);
+        r.anterior2012 = true;
+      } else dias = Math.min(33 * mesesServicio(e.inicio, e.fin) / 12, 24 * 365 / 12);
     }
-    r.baseN = baseN; r.baseQ = baseQ;
-    if (baseN === 0) return { error: "Escribe los votos a favor, en contra y las abstenciones." };
-    var nec = necesarios(regla, baseN, baseQ);
-    r.necesitaN = nec.n; r.necesitaQ = nec.q;
-    if (alcanza(regla, f, qf, baseN, baseQ)) r.estado = "aprobado";
-    else if (regla.presunto && alcanza(regla, f + ausN, qf + ausQ, baseN, baseQ)) {
-      r.estado = "pendiente";
-      r.holguraN = f + ausN - nec.n;
-      r.holguraQ = r2(qf + ausQ - nec.q);
-    } else r.estado = "rechazado";
+    r.diasIndemnizacion = redondea(dias);
+    r.indemnizacion = redondea(dias * diario);
+    r.preavisoTemporal = e.causa === "fin-temporal" && diasEntre(e.inicio, finEx) > 365;
+    r.total = redondea(r.salarioMes + r.vacImporte + r.pagasImporte + r.preavisoImporte + r.indemnizacion);
     return r;
   }
 
-  // Carta a los propietarios ausentes (arts. 17.8 y 9.1.h): si no se oponen en 30 días naturales, su voto cuenta a favor
-  // e = { comunidad, direccion, fechaJunta, acuerdo, secretario, presidente, localidad, fecha }, r = resultado de mayoria()
-  function notificacionAusentes(e, r) {
-    var fecha = FECHA.test(e.fecha || "") ? e.fecha : null;
-    return "COMUNIDAD DE PROPIETARIOS " + (e.comunidad || "[nombre de la comunidad]").toUpperCase() + "\n" + (e.direccion || "[dirección]") + "\n\n" +
-      "Notificación del acuerdo adoptado en la junta de propietarios a los propietarios ausentes\n\n" +
-      "Estimado/a propietario/a de [piso o local]:\n\n" +
-      "En la junta de propietarios celebrada el " + (FECHA.test(e.fechaJunta || "") ? fechaLarga(e.fechaJunta) : "[fecha de la junta]") + ", a la que fue debidamente citado/a, se sometió a votación el siguiente acuerdo:\n\n" +
-      "«" + (e.acuerdo || "[texto del acuerdo]") + "»\n\n" +
-      "Votaron a favor " + r.favor + " propietarios, que representan el " + pct(r.cuotasFavor) + " de las cuotas de participación. El acuerdo requiere el voto favorable de " + r.regla.nombre + " (" + r.regla.base + " de la Ley de Propiedad Horizontal).\n\n" +
-      "De acuerdo con el artículo 17.8 de la Ley de Propiedad Horizontal, su voto se computará como favorable si en el plazo de 30 días naturales desde que reciba esta notificación no manifiesta su discrepancia a quien ejerce las funciones de secretario de la comunidad, por cualquier medio que permita tener constancia de la recepción (por ejemplo, correo electrónico, burofax o escrito entregado en la dirección de la comunidad).\n\n" +
-      "Si no se opone en ese plazo, el acuerdo quedará aprobado y obligará a todos los propietarios (art. 17.9).\n\n" +
-      "En " + (e.localidad || "[localidad]") + ", a " + (fecha ? fechaLarga(fecha) : "[fecha]") + ".\n\n" +
-      "El/La secretario/a: " + (e.secretario || "[nombre]") + "\n\nV.º B.º del/de la presidente/a: " + (e.presidente || "[nombre]");
-  }
-
-  // ---- Convocatoria de la junta: art. 16 (quién convoca, contenido, 6 días para la ordinaria, segunda convocatoria) ----
-  // e = { comunidad, direccion, tipo: "ordinaria" | "extraordinaria", fecha, hora1, hora2, lugar, orden: [...], convoca: "presidente" | "propietarios",
-  //       presidente, morosos: [...], fechaConvocatoria, localidad }
-  function convocatoria(e) {
-    if (!(e.comunidad || "").trim()) return { error: "Escribe el nombre de la comunidad." };
-    if (!FECHA.test(e.fecha || "")) return { error: "Escribe la fecha de la junta." };
-    var h1 = minutos(e.hora1);
-    if (h1 === null) return { error: "Escribe la hora de la primera convocatoria." };
-    var orden = (e.orden || []).map(function (s) { return String(s).trim(); }).filter(Boolean);
-    if (!orden.length) return { error: "Escribe al menos un punto del orden del día." };
-    var h2 = minutos(e.hora2), avisos = [];
-    if (h2 === null) h2 = h1 + 30;
-    else if (h2 < h1 + 30) avisos.push("Entre la primera y la segunda convocatoria tienen que pasar al menos 30 minutos si son el mismo día (art. 16.2). Se ha puesto la segunda media hora después.");
-    if (h2 < h1 + 30) h2 = h1 + 30;
-    var fc = FECHA.test(e.fechaConvocatoria || "") ? e.fechaConvocatoria : null;
-    var dias = fc ? diasEntre(fc, e.fecha) : null;
-    if (dias !== null && dias < 0) return { error: "La fecha de la junta tiene que ser posterior a la de la convocatoria." };
-    var ordinaria = e.tipo !== "extraordinaria";
-    if (ordinaria && dias !== null && dias < 6) avisos.push("La junta ordinaria se cita con al menos 6 días de antelación (art. 16.3): entre la convocatoria y la junta solo hay " + dias + " día" + (dias === 1 ? "" : "s") + ". Cambia la fecha de la junta o de la convocatoria.");
-    var morosos = (e.morosos || []).map(function (s) { return String(s).trim(); }).filter(Boolean);
-    var quien = e.convoca === "propietarios"
-      ? "A petición de propietarios que representan al menos la cuarta parte de los propietarios o el 25 % de las cuotas de participación (art. 16.1 de la Ley de Propiedad Horizontal), se convoca"
-      : "Por orden de " + (e.presidente ? "la presidencia de la comunidad, " + e.presidente + "," : "la presidencia de la comunidad") + " se convoca";
-    var texto = "COMUNIDAD DE PROPIETARIOS " + e.comunidad.trim().toUpperCase() + "\n" + (e.direccion ? e.direccion.trim() + "\n" : "") + "\n" +
-      "CONVOCATORIA DE JUNTA GENERAL " + (ordinaria ? "ORDINARIA" : "EXTRAORDINARIA") + " DE PROPIETARIOS\n\n" +
-      quien + " a todos los propietarios a la junta general " + (ordinaria ? "ordinaria" : "extraordinaria") + " que se celebrará en " + (e.lugar || "[lugar]") +
-      " el " + fechaLarga(e.fecha) + ", a las " + hora(h1) + " en primera convocatoria y, si no hay quórum, a las " + hora(h2) + " en segunda convocatoria (art. 16.2), con el siguiente\n\n" +
-      "ORDEN DEL DÍA\n" + orden.map(function (s, i) { return (i + 1) + ". " + s; }).join("\n") + "\n\n" +
-      "Propietarios con deudas vencidas pendientes de pago con la comunidad (art. 16.2): " + (morosos.length ? "\n" + morosos.map(function (s) { return "- " + s; }).join("\n") : "ninguno.") + "\n" +
-      "Quienes al comenzar la junta no estén al corriente de pago de todas las deudas vencidas, y no las hayan impugnado judicialmente ni consignado judicial o notarialmente, podrán participar en las deliberaciones pero no tendrán derecho de voto (art. 15.2).\n\n" +
-      "Puede asistir en persona o representado/a por otra persona mediante un escrito firmado (art. 15.1); puede usar la autorización que figura al pie. Cualquier propietario puede pedir por escrito a la presidencia que se incluya un asunto en el orden del día de la siguiente junta (art. 16.2).\n\n" +
-      "En " + (e.localidad || "[localidad]") + ", a " + (fc ? fechaLarga(fc) : "[fecha]") + ".\n\n" +
-      (e.convoca === "propietarios" ? "Los propietarios promotores:" : "El/La presidente/a: " + (e.presidente || "[nombre]")) + "\n\n" +
-      "..........................................................................\n\n" +
-      "AUTORIZACIÓN PARA REPRESENTARME EN LA JUNTA (art. 15.1)\n" +
-      "D./D.ª ______________________________, propietario/a de ______________________, autorizo a D./D.ª ______________________________ a asistir y votar en mi nombre en la junta de propietarios del " + fechaLarga(e.fecha) + ".\n" +
-      "Fecha y firma: ______________________";
-    return { texto: texto, avisos: avisos, hora2: hora(h2), dias: dias };
-  }
-
-  // ---- Reparto de una derrama por cuota de participación (art. 9.1.e) o a partes iguales si lo dice el título ----
-  // Cada línea: «Bajo A 3,25», «1.º B; 4,1» o «Local 2, 6» (el último número es el coeficiente). Devuelve [{ nombre, coeficiente }].
-  function parsearLista(texto) {
-    return String(texto || "").split(/\r?\n/).map(function (l) {
-      l = l.trim();
-      if (!l) return null;
-      var m = /^(.*?)[\s;,\t]*([0-9]+(?:[.,][0-9]+)?)\s*%?$/.exec(l);
-      if (!m || !m[1].trim()) return { nombre: l, coeficiente: NaN };
-      return { nombre: m[1].trim().replace(/[;,]+$/, ""), coeficiente: parseFloat(m[2].replace(",", ".")) };
-    }).filter(Boolean);
-  }
-  // e = { importe, lineas: [{ nombre, coeficiente }], modo: "coeficiente" | "iguales" }
-  function derrama(e) {
-    if (!(e.importe > 0)) return { error: "Escribe el importe total de la derrama." };
-    var lineas = e.lineas || [];
-    if (lineas.length < 2) return { error: "Escribe al menos dos viviendas o locales, una por línea, con su coeficiente." };
-    var mala = lineas.filter(function (l) { return !(l.coeficiente > 0); });
-    if (e.modo !== "iguales" && mala.length) return { error: "Falta el coeficiente en: " + mala.map(function (l) { return l.nombre; }).join(", ") + ". Escribe el nombre y, al final, el coeficiente (por ejemplo, «2.º A 4,25»)." };
-    var suma = r2(lineas.reduce(function (s, l) { return s + (l.coeficiente > 0 ? l.coeficiente : 0); }, 0));
-    var total = r2(e.importe), filas = [], acumulado = 0;
-    lineas.forEach(function (l, i) {
-      var parte = e.modo === "iguales" ? total / lineas.length : total * l.coeficiente / suma;
-      var imp = i === lineas.length - 1 ? r2(total - acumulado) : r2(parte);
-      acumulado = r2(acumulado + imp);
-      filas.push({ nombre: l.nombre, coeficiente: l.coeficiente > 0 ? l.coeficiente : null, importe: imp });
-    });
-    var r = { filas: filas, total: total, sumaCoeficientes: suma, modo: e.modo === "iguales" ? "iguales" : "coeficiente" };
-    if (r.modo === "coeficiente" && Math.abs(suma - 100) > 0.5) r.aviso = "Los coeficientes suman " + pct(suma) + ", no 100 %. Si falta alguna vivienda o local, añádela: el reparto se ha hecho en proporción a la suma escrita.";
-    return r;
-  }
-
-  // ---- Carta de reclamación a un propietario moroso (arts. 9.1.e, 15.2 y 21) ----
-  // e = { comunidad, direccion, deudor, piso, importe, concepto, fecha, dias (plazo), firmante: "presidente" | "secretario", nombreFirmante, iban, localidad }
-  function cartaMoroso(e) {
-    if (!(e.importe > 0)) return { error: "Escribe la cantidad que debe." };
-    if (!FECHA.test(e.fecha || "")) return { error: "Escribe la fecha de la carta." };
-    var dias = e.dias >= 1 && e.dias <= 60 ? Math.round(e.dias) : 10;
-    var limite = sumarDias(e.fecha, dias);
-    var texto = "COMUNIDAD DE PROPIETARIOS " + (e.comunidad || "[nombre de la comunidad]").toUpperCase() + "\n" + (e.direccion || "[dirección]") + "\n\n" +
-      "A: " + (e.deudor || "[nombre del propietario]") + ", propietario/a de " + (e.piso || "[piso o local]") + "\n\n" +
-      "Asunto: requerimiento de pago de cuotas de comunidad pendientes\n\n" +
-      "Según la contabilidad de la comunidad, a fecha " + fechaLarga(e.fecha) + " debe " + euros(e.importe) + " en concepto de " + (e.concepto || "[cuotas ordinarias de los meses de … / derrama aprobada el …]") + ".\n\n" +
-      "Contribuir a los gastos comunes con arreglo a la cuota de participación es una obligación de cada propietario (art. 9.1.e de la Ley de Propiedad Horizontal). Le pedimos que pague esa cantidad antes del " + fechaLarga(limite) + (e.iban ? " en la cuenta de la comunidad " + e.iban : "") + ", o que nos indique en ese plazo si hay algún error.\n\n" +
-      "Le recordamos que, mientras no esté al corriente de pago, puede participar en las juntas pero sin derecho de voto (art. 15.2), que la deuda genera intereses desde la fecha en que debió pagarse (art. 21.1) y que, si no paga, la junta puede aprobar la liquidación de la deuda y reclamarla judicialmente por el proceso monitorio, con los gastos y costes de la reclamación a su cargo (art. 21.2 y 21.3).\n\n" +
-      "En " + (e.localidad || "[localidad]") + ", a " + fechaLarga(e.fecha) + ".\n\n" +
-      (e.firmante === "secretario" ? "El/La secretario/a-administrador/a: " : "El/La presidente/a: ") + (e.nombreFirmante || "[nombre]") + "\n\n" +
-      "Recibí: fecha __________ y firma __________";
-    return { texto: texto, limite: limite, dias: dias };
-  }
-
-  var API = { REGLAS: REGLAS, mayoria: mayoria, notificacionAusentes: notificacionAusentes, convocatoria: convocatoria, parsearLista: parsearLista, derrama: derrama, cartaMoroso: cartaMoroso, sumarDias: sumarDias };
-  if (typeof module !== "undefined" && module.exports) { module.exports = API; return; }
-
-  // ---- Páginas ----
-  function p(texto, clase) { var n = document.createElement("p"); n.textContent = texto; if (clase) n.className = clase; return n; }
-  function cifra(etiqueta, valor) { var n = document.createElement("p"), b = document.createElement("strong"); n.className = "alquiler-cifra"; b.textContent = valor; n.append(etiqueta, b); return n; }
+  // «1.250,50», «750,5» y «28.000» al estilo español; «750.50» (sin coma ni grupos de 3) se lee con punto decimal
   function num(v) {
     v = String(v == null ? "" : v).trim();
     if (v.indexOf(",") < 0 && /^\d{1,3}(\.\d{3})+$/.test(v)) v = v.replace(/\./g, "");   // «28.000»: punto de miles
     return parseFloat(v.indexOf(",") >= 0 ? v.replace(/\./g, "").replace(",", ".") : v);
   }
+
+  var API = { num: num, periodoPrueba: periodoPrueba, smi: smi, sumarFecha: sumarFecha, cartaDimision: cartaDimision, vacaciones: vacaciones, finiquito: finiquito, mesesServicio: mesesServicio };
+  if (typeof module !== "undefined" && module.exports) { module.exports = API; return; }
+
+  // ---- Páginas ----
+  function p(texto, clase) { var n = document.createElement("p"); n.textContent = texto; if (clase) n.className = clase; return n; }
+  function cifra(etiqueta, valor) { var n = document.createElement("p"), b = document.createElement("strong"); n.className = "alquiler-cifra"; b.textContent = valor; n.append(etiqueta, b); return n; }
   function enviar(id, pintar) {
     var form = document.getElementById(id), salida = document.getElementById(id + "-resultado");
     if (!form || !salida) return;
@@ -866,114 +816,85 @@
       if (root.__track) root.__track(id.replace(/-/g, "_"));
     });
   }
-  function lineas(v) { return String(v || "").split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean); }
 
-  // Las dos mayorías dibujadas: propietarios y cuotas, con el umbral y el tramo que aportarían los ausentes (voto presunto)
-  function barra(etiqueta, favor, ausentes, necesita, base, unidad) {
-    var fila = document.createElement("div"), cab = document.createElement("p"), b = document.createElement("div");
-    fila.className = "dm-fila";
-    cab.className = "dm-cab";
-    var fmt = unidad === "%" ? pct : String;
-    cab.append(etiqueta + ": ", Object.assign(document.createElement("strong"), { textContent: fmt(favor) }), " a favor de " + fmt(base) + ". Hacen falta " + fmt(necesita) + ".");
-    b.className = "dm-barra";
-    var f = document.createElement("span"), a = document.createElement("span"), u = document.createElement("span");
-    var pf = Math.min(100, 100 * favor / base);
-    f.className = "dm-favor"; f.style.width = pf + "%";
-    a.className = "dm-ausentes"; a.style.left = pf + "%"; a.style.width = Math.max(0, Math.min(100 - pf, 100 * ausentes / base)) + "%";
-    u.className = "dm-umbral"; u.style.left = Math.min(100, 100 * necesita / base) + "%";
-    b.append(f, a, u);
-    fila.append(cab, b);
-    return fila;
-  }
-
-  enviar("calc-mayoria", function (f, s) {
-    var r = mayoria({ tipo: f.tipo.value, convocatoria: f.convocatoria.value, propietarios: num(f.propietarios.value), cuotasTotal: num(f.cuotasTotal.value),
-      morosos: num(f.morosos.value), cuotasMorosos: num(f.cuotasMorosos.value), favor: num(f.favor.value), cuotasFavor: num(f.cuotasFavor.value),
-      contra: num(f.contra.value), cuotasContra: num(f.cuotasContra.value), abstencion: num(f.abstencion.value), cuotasAbstencion: num(f.cuotasAbstencion.value) });
-    var bloque = document.getElementById("bloque-notificacion");
-    bloque.hidden = true;
-    if (r.error) { s.append(p(r.error, "notice notice--error")); return; }
-    if (r.sinVoto) { s.append(cifra("", "No hace falta votarlo"), p(r.texto + " (" + r.base + " de la Ley de Propiedad Horizontal).")); return; }
-    var titulo = r.estado === "aprobado" ? "Se aprueba" : r.estado === "pendiente" ? "Todavía no: depende de los ausentes" : "No se aprueba";
-    s.append(cifra("", titulo));
-    s.append(p("Hace falta " + r.regla.nombre + " (" + r.regla.base + " de la Ley de Propiedad Horizontal)" +
-      (r.regla.total ? ", contando sobre el total de la comunidad" + (r.totalN < num(f.propietarios.value) ? " sin los morosos privados de voto (art. 15.2)" : "") + "."
-                     : r.segunda ? ", contando sobre los asistentes porque la junta se celebra en segunda convocatoria." : ", contando sobre el total de la comunidad porque hay quórum en primera convocatoria.")));
-    if (r.sinQuorum) s.append(p("En primera convocatoria no hay quórum (no asisten la mayoría de los propietarios con la mayoría de las cuotas, art. 16.2), así que la junta se celebra en segunda convocatoria, media hora después, y la mayoría se cuenta sobre los asistentes.", "notice notice--warn"));
-    var g = document.createElement("div");
-    g.className = "dm";
-    var aus = r.regla.presunto && r.estado !== "aprobado";
-    g.append(barra("Propietarios", r.favor, aus ? r.ausentes : 0, r.necesitaN, r.baseN, "n"), barra("Cuotas", r.cuotasFavor, aus ? r.cuotasAusentes : 0, r.necesitaQ, r.baseQ, "%"));
-    s.append(g);
-    if (aus) s.append(p("La parte rayada es lo que sumarían los ausentes si no se oponen; la raya vertical, la mayoría que hace falta.", "fine-print"));
-    if (r.estado === "aprobado") {
-      s.append(p("El acuerdo obliga a todos los propietarios (art. 17.9). Hay que recogerlo en el acta con los votos a favor y en contra y sus cuotas (art. 19.2.f), cerrarla en 10 días naturales y enviarla a todos los propietarios (art. 19.3). Quien votó en contra, estuvo ausente o fue privado del voto indebidamente puede impugnarlo en 3 meses, o en un año si es contrario a la ley o a los estatutos (art. 18)."));
-    } else if (r.estado === "pendiente") {
-      s.append(p("Los ausentes debidamente citados cuentan como votos a favor si, una vez notificado el acuerdo, no se oponen en 30 días naturales (art. 17.8). Hay " + r.ausentes + " ausentes con el " + pct(r.cuotasAusentes) + " de las cuotas: se aprobará si se oponen como mucho " + r.holguraN + (r.holguraN === 1 ? " propietario" : " propietarios") + " y sus cuotas no pasan del " + pct(Math.max(0, r.holguraQ)) + ". Notifícaselo a cada ausente por un medio que deje constancia; debajo tienes la carta."));
-      bloque.hidden = false;
-      document.getElementById("carta-notificacion").value = notificacionAusentes({ comunidad: f.comunidad.value.trim(), direccion: f.direccion.value.trim(), fechaJunta: f.fechaJunta.value, acuerdo: f.acuerdo.value.trim(),
-        secretario: f.secretario.value.trim(), presidente: f.presidente.value.trim(), localidad: f.localidad.value.trim(), fecha: f.fechaCarta.value }, r);
-    } else {
-      s.append(p(r.regla.presunto ? "Ni con todos los ausentes a favor se llegaría a la mayoría. El acuerdo no sale; puede volver a votarse en otra junta."
-        : r.regla.total ? "En este tipo de acuerdo los ausentes no cuentan como votos a favor (art. 17.8), porque el coste no se puede repercutir a quien no votó a favor. El acuerdo no sale; puede volver a votarse en otra junta."
-        : "El acuerdo no sale. Si la mayoría no se consigue, cualquier propietario puede pedir al juez, en el mes siguiente a la segunda junta, que resuelva en equidad (art. 17.7)."));
+  enviar("calc-prueba", function (f, s) {
+    var r = periodoPrueba({ tipo: f.tipo.value, titulado: f.titulado.checked, pyme: f.pyme.checked });
+    s.append(cifra("Duración máxima: ", r.meses === 0 ? "no se puede pactar" : r.meses + (r.meses === 1 ? " mes" : " meses")));
+    s.append(p(r.texto + " (" + r.base + ")."));
+    if (r.meses > 0) {
+      s.append(p("Tiene que pactarse por escrito. Si la persona ya hizo las mismas funciones antes en la empresa, con cualquier contrato, el periodo de prueba es nulo (art. 14.1).", "fine-print"));
+      s.append(p("En el documento informativo va en el apartado h): la duración concreta y qué tareas son objeto de la prueba (art. 3.2.h del RD 723/2026).", "fine-print"));
     }
   });
-  var fm = document.getElementById("calc-mayoria");
-  if (fm) {
-    var sync = function () { document.getElementById("convocatoria-campo").hidden = fm.tipo.value !== "simple"; };
-    fm.addEventListener("change", sync);
-    sync();
+  var fp = document.getElementById("calc-prueba");
+  if (fp) {
+    var syncPrueba = function () { document.getElementById("prueba-extra").hidden = ["indefinido", "temporal-largo"].indexOf(fp.tipo.value) < 0; };
+    fp.addEventListener("change", syncPrueba);
+    syncPrueba();
   }
 
-  enviar("calc-convocatoria", function (f, s) {
-    var r = convocatoria({ comunidad: f.comunidad.value, direccion: f.direccion.value, tipo: f.tipo.value, fecha: f.fecha.value, hora1: f.hora1.value, hora2: f.hora2.value, lugar: f.lugar.value.trim(),
-      orden: lineas(f.orden.value), convoca: f.convoca.value, presidente: f.presidente.value.trim(), morosos: lineas(f.morosos.value), fechaConvocatoria: f.fechaConvocatoria.value, localidad: f.localidad.value.trim() });
-    var hoja = document.getElementById("hoja-convocatoria");
-    hoja.hidden = !!r.error;
+  enviar("calc-smi", function (f, s) {
+    var S = root.__LEGAL__ && root.__LEGAL__.smi;
+    var r = smi({ horas: num(f.horas.value), completa: num(f.completa.value) }, S);
     if (r.error) { s.append(p(r.error, "notice notice--error")); return; }
-    r.avisos.forEach(function (a) { s.append(p(a, "notice notice--warn")); });
-    s.append(p("Convocatoria preparada" + (r.dias !== null ? " con " + r.dias + " días de antelación" : "") + ". Entrégala a cada propietario en el domicilio que haya comunicado a la comunidad o, si no, en su piso; si no se puede, en el tablón de anuncios con diligencia firmada, y surte efecto a los 3 días (art. 9.1.h).", "fine-print"));
-    document.getElementById("texto-convocatoria").value = r.texto;
-    document.getElementById("hoja-convocatoria-texto").textContent = r.texto;
+    s.append(cifra("En 14 pagas: ", euros(r.mensual14) + " al mes"));
+    s.append(cifra("En 12 pagas (extras prorrateadas): ", euros(r.mensual12) + " al mes"));
+    s.append(p("Al año: " + euros(r.anual) + ". Por día: " + euros(r.diario) + ". Es el " + (Math.round(r.fraccion * 1000) / 10).toLocaleString("es-ES") + " % del salario mínimo de " + S.anio + "."));
+    s.append(p("Son importes brutos. Si el convenio colectivo fija un salario mayor, manda el convenio.", "fine-print"));
   });
 
-  enviar("calc-derrama", function (f, s) {
-    var r = derrama({ importe: num(f.importe.value), lineas: parsearLista(f.lista.value), modo: f.modo.value });
-    var hoja = document.getElementById("hoja-derrama");
-    hoja.hidden = !!r.error;
-    if (r.error) { s.append(p(r.error, "notice notice--error")); return; }
-    if (r.aviso) s.append(p(r.aviso, "notice notice--warn"));
-    s.append(cifra("Total repartido: ", euros(r.total)));
-    s.append(p(r.modo === "iguales" ? "A partes iguales entre " + r.filas.length + " viviendas o locales." : "En proporción a los coeficientes (suman " + pct(r.sumaCoeficientes) + "). Los céntimos del redondeo se ajustan en la última línea."));
-    var cuerpo = document.getElementById("derrama-filas");
-    cuerpo.replaceChildren();
-    r.filas.forEach(function (fila) {
-      var tr = document.createElement("tr");
-      [fila.nombre, fila.coeficiente === null ? "" : pct(fila.coeficiente), euros(fila.importe)].forEach(function (v, i) { var td = document.createElement("td"); td.textContent = v; if (i) td.className = "num"; tr.append(td); });
-      cuerpo.append(tr);
-    });
-    document.getElementById("derrama-total").textContent = euros(r.total);
-  });
-
-  enviar("calc-moroso", function (f, s) {
-    var r = cartaMoroso({ comunidad: f.comunidad.value.trim(), direccion: f.direccion.value.trim(), deudor: f.deudor.value.trim(), piso: f.piso.value.trim(), importe: num(f.importe.value), concepto: f.concepto.value.trim(),
-      fecha: f.fecha.value, dias: num(f.dias.value), firmante: f.firmante.value, nombreFirmante: f.nombreFirmante.value.trim(), iban: f.iban.value.trim(), localidad: f.localidad.value.trim() });
+  enviar("calc-dimision", function (f, s) {
+    var r = cartaDimision({ nombre: f.nombre.value.trim(), empresa: f.empresa.value.trim(), puesto: f.puesto.value.trim(), fecha: f.fecha.value, dias: num(f.dias.value) });
     var bloque = document.getElementById("bloque-carta");
     bloque.hidden = !!r.error;
     if (r.error) { s.append(p(r.error, "notice notice--error")); return; }
-    s.append(cifra("Plazo para pagar: hasta el ", fechaLarga(r.limite)));
-    s.append(p("Entrégala con acuse de recibo o envíala por burofax o correo certificado: si llega a la reclamación judicial, hay que acreditar que la deuda se notificó (art. 21.3). Si no se puede entregar, vale el tablón de anuncios durante al menos 3 días.", "fine-print"));
-    document.getElementById("carta-moroso").value = r.texto;
+    s.append(cifra("Tu último día de trabajo: ", fechaLarga(r.ultimo)));
+    s.append(p("Entrega la carta y quédate una copia firmada por la empresa, o envíala por un medio que deje constancia de la fecha.", "fine-print"));
+    document.getElementById("carta-dimision").value = r.texto;
   });
 
-  // Hojas imprimibles (convocatoria y derrama): el navegador imprime solo la hoja o la guarda en PDF
-  document.querySelectorAll("[data-imprimir]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
+  enviar("calc-vacaciones", function (f, s) {
+    var r = vacaciones({ inicio: f.inicio.value, fin: f.fin.value, anuales: num(f.anuales.value), disfrutados: num(f.disfrutados.value) || 0 });
+    if (r.error) { s.append(p(r.error, "notice notice--error")); return; }
+    var n = function (x) { return x.toLocaleString("es-ES", { maximumFractionDigits: 2 }); };
+    s.append(cifra("Vacaciones generadas: ", n(r.generados) + " días naturales"));
+    s.append(p("Por " + r.dias + " días de contrato en el periodo. Te quedan " + n(r.pendientes) + " días por disfrutar."));
+    s.append(p("Si el convenio da más días o los cuenta en días laborables, se aplica el convenio. Las vacaciones que no hayas disfrutado al terminar el contrato se pagan en el finiquito.", "fine-print"));
+  });
+
+  // Plantilla de registro de jornada: imprime solo la hoja (el navegador permite guardarla en PDF)
+  var imprimir = document.getElementById("imprimir-hoja");
+  if (imprimir) {
+    imprimir.addEventListener("click", function () {
       document.body.classList.add("imprimir-hoja");
       root.print();
     });
+    root.addEventListener("afterprint", function () { document.body.classList.remove("imprimir-hoja"); });
+  }
+
+
+  enviar("calc-finiquito", function (f, s) {
+    var r = finiquito({ inicio: f.inicio.value, fin: f.fin.value, anual: num(f.anual.value), pagas: f.pagas.value, causa: f.causa.value,
+      vacAnuales: num(f.vacanuales.value), vacDisfrutadas: num(f.vacdisfrutadas.value) || 0,
+      diasMes: f.diasmes.value.trim() === "" ? undefined : num(f.diasmes.value), preaviso: num(f.preaviso.value) || 0 });
+    if (r.error) { s.append(p(r.error, "notice notice--error")); return; }
+    var n = function (x) { return x.toLocaleString("es-ES", { maximumFractionDigits: 2 }); };
+    s.append(cifra("Total bruto: ", euros(r.total)));
+    var ul = document.createElement("ul");
+    var linea = function (t) { var li = document.createElement("li"); li.textContent = t; ul.append(li); };
+    linea("Salario de " + r.diasMes + " días del último mes: " + euros(r.salarioMes));
+    linea("Vacaciones no disfrutadas (" + n(r.vacPendientes) + " de " + n(r.vacGeneradas) + " días generados este año): " + euros(r.vacImporte));
+    if (f.pagas.value !== "prorrateadas") linea("Parte generada de las pagas extra: " + euros(r.pagasImporte));
+    if (r.preavisoFalta > 0) linea("Preaviso no dado (" + r.preavisoFalta + " días, art. 53.4): " + euros(r.preavisoImporte));
+    linea("Indemnización (" + n(r.diasIndemnizacion) + " días de salario, " + r.base + " del Estatuto de los Trabajadores): " + euros(r.indemnizacion));
+    s.append(ul);
+    if (r.anterior2012) s.append(p("Como empezaste antes del 12 de febrero de 2012, el tiempo anterior se paga a 45 días por año y el posterior a 33, con el tope de la disposición transitoria undécima."));
+    if (r.causa === "improcedente") s.append(p("Si el despido se declara improcedente, la empresa elige entre readmitirte o pagarte esta indemnización (art. 56.1). Para reclamar tienes 20 días hábiles desde el despido (art. 59.3).", "fine-print"));
+    if (r.causa === "objetivo") s.append(p("Si no estás de acuerdo con el despido, tienes 20 días hábiles para reclamar (art. 59.3); en el preaviso tienes 6 horas semanales de permiso retribuido para buscar empleo (art. 53.2).", "fine-print"));
+    if (r.preavisoTemporal) s.append(p("Como el contrato duró más de un año, quien lo da por terminado tenía que avisar con 15 días de antelación (art. 49.1.c).", "fine-print"));
+    if (r.causa === "dimision") s.append(p("En la baja voluntaria no hay indemnización, y tienes que dar el preaviso que marque tu convenio o la costumbre del lugar (art. 49.1.d).", "fine-print"));
+    s.append(p("Son importes brutos y orientativos. Al salario, las vacaciones y las pagas se les aplican la retención de IRPF y la cotización; la indemnización está exenta de IRPF hasta la cuantía obligatoria del Estatuto (art. 7.e de la Ley del IRPF). Si tu convenio mejora algo, manda el convenio.", "fine-print"));
   });
-  root.addEventListener("afterprint", function () { document.body.classList.remove("imprimir-hoja"); });
+
 })(typeof window !== "undefined" ? window : {});
 ;
